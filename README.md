@@ -1,16 +1,35 @@
-# testapp
+# Technical Stack Overview
 
-A new Flutter project.
+## Backend Security (Spring WebFlux + JWT)
 
-## Getting Started
+- JWT (JSON Web Token) based authentication
+- Stateless authorization flow
+- Token validation on protected endpoints
+- Role-based access control (RBAC)
+- Reactive security context propagation
+- Token refresh mechanism
 
-This project is a starting point for a Flutter application.
+## Flutter Libraries & SDKs
 
-A few resources to get you started if this is your first Flutter project:
+### Location Services
+- **geolocator**: Real-time device location tracking
+- **location**: Background location updates
+- **google_maps_flutter**: Interactive maps integration
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+### Background Processing
+- **flutter_foreground_service**: Persistent background tasks
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+
+### Real-time Communication
+- **web_socket_channel**: WebSocket connectivity
+
+### Maps Integration
+- Real-time position updates
+
+### Additional Features
+- Secure storage for tokens
+- Background location tracking
+- Real-time navigation
+- Push notifications
+```
+
