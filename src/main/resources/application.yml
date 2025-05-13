@@ -1,0 +1,56 @@
+#APP CONF
+server:
+    port: 8080
+    error:
+      whitelabel:
+          enabled: false
+
+spring:
+    security:
+        jwt:
+            secret: JI60Ft2l3Z3knt9mgnllYef9Sm3Iu37A
+            access-token: 15m
+            refresh-token: 30d
+
+    jackson:
+        serialization:
+            write-dates-as-timestamps: false
+
+        date-format: yyyy-MM-dd'T'HH:mm:ss.SSS'Z'
+
+    application:
+        name: car-meeter
+
+    r2dbc:
+        url: r2dbc:postgresql://localhost:5432/carMeeter
+        username: postgres
+        password: orxan20052004
+        pool:
+            enabled: true
+            initial-size: 5
+            max-size: 20
+
+    codec:
+        max-in-memory-size: 5MB  # ???? ???????? ??????? JSON ???????
+
+    logging:
+        level:
+            root: INFO
+            org.springframework.security: DEBUG
+            world.horosho.CarMeeter: DEBUG
+
+#    bucket4j:
+#        enabled: true
+#        limits:
+#            capacity: 100
+#            refill-tokens: 100
+#            refill-period: 1m
+    management:
+        endpoints:
+            web:
+                exposure:
+                    include: health, info
+    data:
+        redis:
+            url: redis://alan:alanpassword@10.10.10.2:6379
+
