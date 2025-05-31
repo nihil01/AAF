@@ -142,7 +142,7 @@ export const GoogleMapPage: React.FC<GoogleMapPageProps> = ({ mapClicked, onMapC
                         mapInstance.current = await GoogleMap.create({
                             id: "my-map",
                             element: mapRef.current,
-                            apiKey: "AIzaSyCo2SJq2InX6iCZxW6BMMBn7RJ04XNUjco",
+                            apiKey: "XXX",
                             config: cameraConfig,
                         });
 
