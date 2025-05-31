@@ -30,10 +30,10 @@ public class AuthenticationManager implements ReactiveAuthenticationManager {
         if (!(authentication instanceof JwtAuthentication)) {
             return Mono.error(new BadCredentialsException("Unsupported authentication type"));
         }
+
         String token = authentication.getCredentials().toString();
         logger.debug("Authenticating token: {}", token);
 
-        // Проверяем, не отозван ли токен
             return jwtService.verifyToken(token)
                 .flatMap(isValid -> {
                     if (!isValid) {
@@ -41,7 +41,6 @@ public class AuthenticationManager implements ReactiveAuthenticationManager {
                         return Mono.error(new BadCredentialsException("Invalid JWT token"));
                     }
 
-                    // Извлекаем пользователя из токена
                     return jwtService.extractUser(token)
                         .switchIfEmpty(Mono.error(new BadCredentialsException("Could not extract user from token")))
                         .flatMap(userResponse -> {

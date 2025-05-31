@@ -8,7 +8,7 @@ import lombok.*;
 @Builder
 public class UserCords {
 
-    private String userId;
+    private String userName;
     private String type;
     private double latitude;
     private double longitude;

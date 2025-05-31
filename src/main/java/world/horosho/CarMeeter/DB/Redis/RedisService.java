@@ -2,6 +2,7 @@ package world.horosho.CarMeeter.DB.Redis;
 
 import org.springframework.data.redis.core.ReactiveRedisOperations;
 import org.springframework.stereotype.Service;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.time.Duration;
@@ -107,13 +108,48 @@ public class RedisService {
     }
 
 
-public Mono<String> getEmailCodeRegistrationPending(String email) {
-    return redisOperations.opsForValue().getAndDelete("email_registration:" + email)
+    public Mono<String> getEmailCodeRegistrationPending(String email) {
+        return redisOperations.opsForValue().getAndDelete("email_registration:" + email)
             .switchIfEmpty(Mono.defer(() -> {
                 System.out.println("No registration pending for email: " + email);
                 return Mono.empty();
-            }));
-}
+        }));
+    }
+
+    //FRIENDS RETRIEVAL
+
+public Mono<Void> setFriendshipAwaiting(String myFriendshipUUID, String friendsUUID){
+        // Add to a Redis set to store multiple mappings
+        return redisOperations.opsForSet().isMember("friendship_awaiting:" + friendsUUID, myFriendshipUUID)
+            .flatMap(aBoolean -> {
+                if (!aBoolean) {
+                    return redisOperations.opsForSet().add("friendship_awaiting:" + friendsUUID, myFriendshipUUID).then();
+                } else {
+                    return Mono.error(new IllegalStateException("Friendship request already exists"));
+                }
+            });
+    }
+    public Flux<String> getFriendshipAwaiting(String uuid){
+        // Get all pending friend requests for this user
+        return redisOperations.opsForSet().members("friendship_awaiting:" + uuid);
+    }
+
+    public Mono<Boolean> removeFriendshipAwaiting(String myFriendshipUUID, String friendsUUID){
+        // Remove a specific friend request from the set
+        return redisOperations.opsForSet().remove("friendship_awaiting:" + myFriendshipUUID, friendsUUID)
+                .map(removed -> removed > 0)
+                .onErrorResume(e -> {
+                    System.err.println("Error removing friendship request: " + e.getMessage());
+                    return Mono.just(false);
+                })
+                .doOnSuccess(result -> {
+                    if(result) {
+                        System.out.println("Successfully removed friendship request");
+                    } else {
+                        System.out.println("No friendship request found to remove");
+                    }
+                });
+    }
 
 
 

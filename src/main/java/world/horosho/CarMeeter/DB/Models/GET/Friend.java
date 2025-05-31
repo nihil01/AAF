@@ -17,6 +17,5 @@ import java.time.Instant;
 
 public class Friend {
     private String username;
-    private String friendship_uuid;
     private Instant registered;
 }

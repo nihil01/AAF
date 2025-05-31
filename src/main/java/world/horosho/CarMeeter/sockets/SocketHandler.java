@@ -31,13 +31,13 @@ public class SocketHandler implements WebSocketHandler {
 
                         switch (userCords.getType()) {
                             case "init" -> {
-                                return socketUtils.registerUser(userCords.getUserId(), session);
+                                return socketUtils.registerUser(userCords.getUserName(), session);
                             }
                             case "broadcast" -> {
-                                return socketUtils.broadcast(userCords.getUserId(), userCords);
+                                return socketUtils.broadcast(userCords);
                             }
                             case "disconnect" -> {
-                                return socketUtils.removeUser(userCords.getUserId());
+                                return socketUtils.removeUser(userCords.getUserName());
                             }
                             default -> {
                                 return session.send(Mono.just(session.textMessage("Error: Unknown message type: " + userCords.getType())));

@@ -8,27 +8,24 @@ import world.horosho.CarMeeter.DB.Models.GET.Friend;
 import world.horosho.CarMeeter.DB.Models.POST.Friends;
 
 public interface FriendsRepository extends ReactiveCrudRepository<Friends, Long>{
-//    @Query("""
-//            SELECT u.*
-//            FROM users u
-//            JOIN friends f ON
-//                (f.user_id = :uuid AND f.friend_id = u.user_uuid) OR
-//                (f.friend_id = :uuid AND f.user_id = u.user_uuid)
-//            """)
-//    Mono<User> findFriendByID(String uuid);
 
     //1.
     @Query("""
-            SELECT username, friendship_uuid, registered FROM users u
-            JOIN friends f ON f.user_id = u.friendship_uuid
-            WHERE f.friend_id = :uuid ORDER BY u.username;
+            SELECT u.username, u.registered
+            FROM users u
+            JOIN friends f ON u.username = f.friend_name AND f.user_name = :name
+            UNION
+            SELECT u.username, u.registered
+            FROM users u
+            JOIN friends f ON u.username = f.user_name AND f.friend_name = :name;
+            
         """)
-    Flux<Friend> findFriendship(String uuid);
+    Flux<Friend> findFriendship(String name);
 
     //2.
     @Query("""
             DELETE FROM friends
-            WHERE user_id = :userID AND friend_id = :friendID
+            WHERE user_name = :userName AND friend_name = :friendName
         """)
-    Mono<String> deleteFriendship(String userID, String friendID);
+    Mono<String> deleteFriendship(String userName, String friendName);
 }

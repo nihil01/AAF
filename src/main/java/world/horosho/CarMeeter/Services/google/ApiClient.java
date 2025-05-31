@@ -13,30 +13,33 @@ import world.horosho.CarMeeter.Services.entities.UserService;
 import world.horosho.CarMeeter.Services.entities.UserUtilities;
 
 import java.security.GeneralSecurityException;
-import java.util.Collections;
+import java.util.List;
 
 @Service
 @AllArgsConstructor
 public class ApiClient implements UserUtilities {
 
     private final UserService userService;
-    private static final String CLIENT_ID = "794979457672-l913dtsm0bmg433sq1q9bn10akrcr87e.apps.googleusercontent.com";
+    private static final String CLIENT_ID_ANDROID
+            = "794979457672-l913dtsm0bmg433sq1q9bn10akrcr87e.apps.googleusercontent.com";
 
-    public Mono<UserResponse> validateRequest(String token, String ipAddress) {
+    private static final String CLIENT_ID_IOS = "XXXXXXXXXXXXXXXXX";
+
+public Mono<UserResponse> validateRequest(String token, String ipAddress) {
         return extractPayload(token).flatMap(payload -> {
             String userEmail = payload.getEmail();
             String userName = payload.get("name").toString();
             System.out.println("Received payload: " + payload);
 
             return userService.retrieveUser(userEmail)
-                    .flatMap(exists -> {
-                        if (exists.getSuccess()) {
-                            return Mono.just(exists);
-                        } else {
-                            return mapToUser(new OauthUser(userEmail, userName, ipAddress, token))
-                                    .flatMap(userService::saveUser);
-                        }
-                    });
+                .flatMap(exists -> {
+                    if (exists.getSuccess()) {
+                        return Mono.just(exists);
+                    } else {
+                        return mapToUser(new OauthUser(userEmail, userName, ipAddress, token))
+                            .flatMap(userService::saveUser);
+                    }
+                });
         })
         .doOnSuccess(response -> {
             System.out.println("Successfully validated request for user: " + response.getEmail());
@@ -50,19 +53,19 @@ public class ApiClient implements UserUtilities {
     private Mono<GoogleIdToken.Payload> extractPayload(String token) {
 
         return Mono.fromCallable(() -> {
-                var verifier = new GoogleIdTokenVerifier.Builder(
-                        new NetHttpTransport(),
-                        GsonFactory.getDefaultInstance())
-                        .setAudience(Collections.singletonList(CLIENT_ID))
-                        .build();
+            var verifier = new GoogleIdTokenVerifier.Builder(
+                new NetHttpTransport(),
+                GsonFactory.getDefaultInstance())
+                .setAudience(List.of(CLIENT_ID_ANDROID, CLIENT_ID_IOS))
+                .build();
 
-                GoogleIdToken idToken = verifier.verify(token);
+            GoogleIdToken idToken = verifier.verify(token);
 
-                if (idToken == null) {
-                    throw new GeneralSecurityException("Invalid ID token");
-                }
+            if (idToken == null) {
+                throw new GeneralSecurityException("Invalid ID token");
+            }
 
-                return idToken.getPayload();
-            });
+            return idToken.getPayload();
+        });
     }
 }

@@ -11,16 +11,26 @@ import reactor.core.publisher.Mono;
 @Configuration
 public class RouterConfig implements WebFilter {
 
-    private final Bucket bucketConfig;
+    private final Bucket strictBucket;
+    private final Bucket bucket;
 
-    public RouterConfig(Bucket bucketConfig) {
-        this.bucketConfig = bucketConfig;
+    public RouterConfig(Bucket strictBucket, Bucket bucket) {
+        this.strictBucket = strictBucket;
+        this.bucket = bucket;
     }
 
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, WebFilterChain chain) {
 
-        if (!bucketConfig.tryConsume(1)) {
+        if (exchange.getRequest().getPath().value().contains("/api/v1/silent/nearby")){
+            System.out.println("Contains path i need!!");
+            if (!strictBucket.tryConsume(1)) {
+                exchange.getResponse().setStatusCode(HttpStatus.TOO_MANY_REQUESTS);
+                return exchange.getResponse().setComplete();
+            }
+        }
+
+        if (!bucket.tryConsume(1)) {
             exchange.getResponse().setStatusCode(HttpStatus.TOO_MANY_REQUESTS);
             return exchange.getResponse().setComplete();
         }

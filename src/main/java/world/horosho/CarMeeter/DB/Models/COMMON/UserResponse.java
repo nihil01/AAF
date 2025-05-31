@@ -12,6 +12,5 @@ public class UserResponse {
     private String username;
     private String registered;
     private Boolean success;
-    private String friendship_uuid;
 
 }

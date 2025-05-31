@@ -6,17 +6,18 @@ import world.horosho.CarMeeter.DB.Models.POST.User;
 import world.horosho.CarMeeter.DB.Models.COMMON.UserResponse;
 
 import java.time.Instant;
+import java.util.Locale;
 
 public interface UserUtilities {
 
     default Mono<UserResponse> mapToUserResponse(User user){
-        return Mono.just(new UserResponse(user.getEmail(), user.getUsername(), user.getRegistered().toString(),
-                true, user.getFriendshipUUID()));
+        return Mono.just(new UserResponse(user.getEmail(), user.getUsername(),
+                user.getRegistered().toString(), true));
     }
 
     default Mono<User> mapToUser(OauthUser user){
-        System.out.println("MAP MAP MAP");
-        User newUser = new User(user.getEmail(), user.getUsername(), user.getIpAddress(), user.getIdToken());
+        User newUser = new User(user.getEmail(), user.getUsername().toLowerCase(Locale.ROOT),
+                user.getIpAddress(), user.getIdToken());
         newUser.setRegistered(Instant.now());
         System.out.println(newUser);
         return Mono.just(newUser);
@@ -24,7 +25,7 @@ public interface UserUtilities {
 
 
     default Mono<Boolean> checkUserPasswordLength(String pass){
-        return Mono.just(pass.length() > 1 && pass.length() < 25);
+        return Mono.just(pass.length() > 8 && pass.length() < 25);
     }
 
 }

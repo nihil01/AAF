@@ -17,12 +17,10 @@ import org.springframework.data.relational.core.mapping.Table;
 
 public class Friends {
     @NotNull
-    @Column("user_id")
-    @Size(min = 8, max = 8, message = "User ID must be exactly 8 characters")
-    private String userID;
+    @Column("user_name")
+    private String user;
 
     @NotNull
-    @Column("friend_id")
-    @Size(min = 8, max = 8, message = "Friend ID must be exactly 8 characters")
-    private String friendID;
+    @Column("friend_name")
+    private String friend;
 }

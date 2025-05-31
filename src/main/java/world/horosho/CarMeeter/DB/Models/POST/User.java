@@ -21,7 +21,7 @@ public class User {
     private long id;
 
     @NotBlank
-    @Pattern(regexp = "^(login|register)$", message = "Invalid type")
+    @Pattern(regexp = "^(login|register|google_oauth)$", message = "Invalid type")
     @Transient
     private String type;
 
@@ -39,9 +39,6 @@ public class User {
 
     @Column("ip_address")
     protected String ipAddress;
-
-    @Column("friendship_uuid")
-    private String friendshipUUID;
 
     private Instant registered;
 

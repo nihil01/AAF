@@ -8,7 +8,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
-import world.horosho.CarMeeter.DB.Models.COMMON.OauthUser;
 import world.horosho.CarMeeter.DB.Models.POST.User;
 import world.horosho.CarMeeter.DB.Models.COMMON.UserResponse;
 import world.horosho.CarMeeter.Services.entities.UserService;
@@ -48,8 +47,8 @@ public class AuthController {
                         return getMono(userResponse);
 
                     }else if(userResponse.getRegistered().equals("EMAIL_AWAITING")){
-                        return Mono.just(ResponseEntity.status(HttpStatus.OK).body(new UserResponse(
-                                "","","",true,"")));
+                        return Mono.just(ResponseEntity.status(HttpStatus.OK).body(new UserResponse("",
+                                "","",true)));
                     }
                     else {
                         return Mono.just(ResponseEntity.badRequest().body(userResponse));
@@ -58,17 +57,17 @@ public class AuthController {
 
             case "google_oauth" -> {
                 if (user.getIdToken() != null && !user.getIdToken().isBlank()) {
-                    yield apiClient.validateRequest(user.getIdToken(), user.getIpAddress())
+                     yield apiClient.validateRequest(user.getIdToken(), user.getIpAddress())
                             .flatMap(this::getMono);
                 } else {
                     yield Mono.just(ResponseEntity.badRequest().body(new UserResponse(
-                            null, null, null, false, "Missing idToken for Google OAuth"
+                            "Missing idToken for Google OAuth", null, null, false
                     )));
                 }
             }
 
             default -> Mono.just(ResponseEntity.badRequest().body(new UserResponse(
-                    null, null, null, false, "Unsupported authentication type"
+                    "Unsupported authentication type", null, null, false
             )));
         };
     }
@@ -82,16 +81,19 @@ public class AuthController {
     }
 
     @GetMapping("/refresh")
-    public Mono<Void> refresh(ServerWebExchange exchange) {
+    public Mono<ResponseEntity<Void>> refresh(ServerWebExchange exchange) {
         return getReadyToken(exchange)
             .flatMap(strings -> {
-                jwtService.refreshToken(strings[0]).flatMap(newToken -> {
-                    exchange.getResponse()
-                            .getHeaders()
-                            .add("authorization", "Bearer %s".formatted(newToken));
-                return Mono.empty();
+                return jwtService.refreshToken(strings[0]).flatMap(newToken -> {
+                    if (!newToken.equals("INVALID_REFRESH_TOKEN")){
+                        exchange.getResponse()
+                                .getHeaders()
+                                .add("authorization", "Bearer %s".formatted(newToken));
+                        return Mono.just(ResponseEntity.ok().build());
+                    }
+
+                return Mono.just(ResponseEntity.badRequest().build());
             });
-            return Mono.empty();
         });
     }
 
@@ -109,8 +111,10 @@ public class AuthController {
 
     @PostMapping("/password-recovery")
     private Mono<ResponseEntity<Map<String, Boolean>>> passwordRecovery(
-            @Valid @ModelAttribute RecoveryRequest recoveryRequest
+            @Valid @RequestBody RecoveryRequest recoveryRequest
     ) {
+        System.out.println(recoveryRequest);
+
         return userService.recoverPassword(recoveryRequest)
                 .map(userResponse -> ResponseEntity.ok().body(userResponse))
                 .defaultIfEmpty(ResponseEntity.ok()

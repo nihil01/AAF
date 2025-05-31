@@ -14,6 +14,7 @@ import world.horosho.CarMeeter.Services.mail.RecoveryRequest;
 
 import java.time.Instant;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 
 @Service
@@ -27,16 +28,15 @@ public class UserService implements UserUtilities{
     private final RedisService redisService;
 
     //authentication logic
-    // Added error handling for SQL query execution
 
     public Mono<UserResponse> createUser(User user) {
-        return userRepository.findByEmail(user.getEmail())
+        return userRepository.findByUsernameAndEmail(user.getUsername(), user.getEmail())
             .onErrorResume(e -> {
                 System.err.println("SQL Error during user lookup: " + e.getMessage());
                 return Mono.empty();
             })
-            .flatMap(existingUser -> Mono.just(new UserResponse("", "", Instant.now().toString(),
-                    false, null)))
+            .flatMap(existingUser -> Mono.just(new UserResponse("USER EXISTS", "", Instant.now().toString(),
+                    false)))
             .switchIfEmpty(
                 Mono.defer(() ->
                     checkUserPasswordLength(user.getPassword())
@@ -49,19 +49,27 @@ public class UserService implements UserUtilities{
                                     System.out.println("user provided otp " + user.getCode());
                                     //* approve user registration
                                     if (s.equals(user.getCode())) {
+
                                         user.setPassword(passwordEncoder.encode(user.getPassword()));
-                                        return userRepository.save(user)
+
+                                        return this.normalizeUserName(user.getUsername())
+                                            .flatMap(s1 -> {
+                                                user.setUsername(s1);
+                                                return Mono.just(user);
+                                            })
+                                            .flatMap(userRepository::save)
                                             .onErrorResume(e -> {
                                                 System.err.println("SQL Error during user save: " + e.getMessage());
                                                 return Mono.empty();
                                             })
                                             .flatMap(savedUser -> userRepository.findByEmail(savedUser.getEmail())
                                             .flatMap(this::mapToUserResponse));
+
                                     } else {
                                         System.out.println("Not equals !!");
                                         //* handle invalid code
                                         return Mono.just(new UserResponse("", "",
-                                                Instant.now().toString(), false, null));
+                                                Instant.now().toString(), false));
                                     }
                                 })
                                 .switchIfEmpty(Mono.defer(() -> mailService.sendEmail(new MailRequest(user.getUsername(), user.getEmail(),
@@ -70,7 +78,7 @@ public class UserService implements UserUtilities{
                             }else{
                                 //* invalid password length
                                 return Mono.just(new UserResponse("", "", Instant.now().toString(),
-                                        false, null));
+                                        false));
                             }
                         })
                 )
@@ -84,11 +92,11 @@ public class UserService implements UserUtilities{
                     return mapToUserResponse(existingUser);
                 }else{
                     return Mono.just(new UserResponse("", "",
-                        Instant.now().toString(), false, null));
+                        Instant.now().toString(), false));
                 }
             })
             .switchIfEmpty(Mono.just(new UserResponse("", "",
-                Instant.now().toString(), false, null)));
+                Instant.now().toString(), false)));
     }
 
 
@@ -102,7 +110,7 @@ public class UserService implements UserUtilities{
                         "", ip, "RESET_PASS")));
         }
         return Mono.just(new UserResponse("", "",
-                Instant.now().toString(), false, null));
+                Instant.now().toString(), false));
     }
 
     public Mono<Map<String, Boolean>> recoverPassword(RecoveryRequest recoveryRequest) {
@@ -146,12 +154,25 @@ public class UserService implements UserUtilities{
         return userRepository.findByEmail(email)
             .flatMap(this::mapToUserResponse)
             .switchIfEmpty(Mono.just(new UserResponse("", ""
-                    , "", false,"")));
+                    , "", false)));
     }
 
     public Mono<UserResponse> saveUser(User user){
-        return userRepository.save(user)
+        return normalizeUserName(user.getUsername())
+            .map(normalizedUsername -> {
+                user.setUsername(normalizedUsername);
+                return user;
+            })
+            .flatMap(userRepository::save)
+            .onErrorResume(e -> {
+                System.err.println("Error saving user: " + e.getMessage());
+                return Mono.empty();
+            })
             .flatMap(this::mapToUserResponse);
+    }
+
+    private Mono<String> normalizeUserName(String username){
+        return Mono.just(username.toLowerCase(Locale.ROOT).replaceAll(" ", username.contains(" ") ? "_" : ""));
     }
 
 }

@@ -79,41 +79,43 @@ public class JwtService {
                 claims.get("email").asString(),
                 claims.get("username").asString(),
                 claims.get("registered").asString(),
-                true,
-                claims.get("friendship_uuid").asString()
-            );
+                true);
         }).onErrorResume(e -> Mono.empty());
     }
 
 
     public Mono<String> refreshToken(String token) {
         return verifyToken(token)
-        .filter(valid -> valid)
-        .map(valid -> JWT.decode(token))
-        .map(decodedJWT -> {
-            Map<String, Claim> claims = decodedJWT.getClaims();
+            .flatMap(valid -> {
+                if (!valid) {
+                    return Mono.just("INVALID_REFRESH_TOKEN");
+                }
+                return Mono.just(JWT.decode(token))
+                    .map(decodedJWT -> {
+                        Map<String, Claim> claims = decodedJWT.getClaims();
 
-            UserResponse userResponse = new UserResponse(
-                claims.get("email").asString(),
-                claims.get("username").asString(),
-                claims.get("registered").asString(),
-                true,
-                claims.get("friendship_uuid").asString()
-            );
+                        UserResponse userResponse = new UserResponse(
+                            claims.get("email").asString(),
+                            claims.get("username").asString(),
+                            claims.get("registered").asString(),
+                            true
+                        );
 
-            Map<String, Object> data = objectMapper.convertValue(
-                userResponse,
-                new TypeReference<>() {}
-            );
+                        Map<String, Object> data = objectMapper.convertValue(
+                            userResponse,
+                            new TypeReference<>() {}
+                        );
 
-            return JWT.create()
-                .withExpiresAt(Instant.now().plus(15, ChronoUnit.MINUTES))
-                .withIssuedAt(Instant.now())
-                .withIssuer("car-meeter-api")
-                .withPayload(data)
-                .sign(algorithm);
-        });
+                        return JWT.create()
+                            .withExpiresAt(Instant.now().plus(15, ChronoUnit.MINUTES))
+                            .withIssuedAt(Instant.now())
+                            .withIssuer("car-meeter-api")
+                            .withPayload(data)
+                            .sign(algorithm);
+                    });
+            });
     }
+
 
     public Mono<Void> revokeToken(String token) {
         return redisService.setRevokedToken(token);
