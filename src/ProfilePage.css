@@ -1,0 +1,106 @@
+ion-content {
+    --padding-top: 16px;
+    --padding-bottom: 16px;
+    --padding-start: 16px;
+    --padding-end: 16px;
+}
+
+h2 {
+    font-size: 1.3rem;
+    font-weight: bold;
+    margin-bottom: 4px;
+}
+
+h3 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-top: 1rem;
+    margin-bottom: 0.5rem;
+}
+
+.ion-text-muted {
+    color: var(--ion-color-medium);
+}
+
+.ion-margin-vertical {
+    margin-top: 1rem !important;
+    margin-bottom: 1rem !important;
+}
+
+/* Сегменты */
+ion-segment {
+    margin-top: 16px;
+    margin-bottom: 16px;
+}
+
+ion-segment-button {
+    font-weight: 600;
+    font-size: 0.95rem;
+    padding: 8px 12px;
+}
+
+/* Статистика профиля */
+.profile-stats {
+    display: flex;
+    justify-content: space-around;
+    margin-top: 1rem;
+    text-align: center;
+}
+
+.profile-stats div p:first-child {
+    font-size: 1.3rem;
+    font-weight: bold;
+    margin: 0;
+}
+
+.profile-stats div p:last-child {
+    font-size: 0.85rem;
+    color: var(--ion-color-medium);
+    margin: 4px 0 0 0;
+}
+
+/* Значок статуса */
+.avatar-badge {
+    position: absolute;
+    bottom: 4px;
+    right: 0px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    border: 2px solid white;
+    background-color: var(--ion-color-success);
+}
+
+/* Иконки рейтинга */
+.ion-rating-stars ion-icon {
+    margin-right: 2px;
+}
+
+/* Кнопки */
+ion-button[fill="outline"] {
+    --border-radius: 8px;
+    --padding-start: 10px;
+    --padding-end: 10px;
+    --border-color: var(--ion-color-primary);
+    --color: var(--ion-color-primary);
+}
+
+/* Карточка профиля */
+ion-card {
+    border-radius: 12px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
+}
+
+ion-card-content {
+    padding: 16px;
+}
+
+/* Разделительная линия */
+.ion-border-bottom {
+    border-bottom: 1px solid var(--ion-color-light);
+    padding-bottom: 1rem;
+}
+
+.ion-margin-end-xs {
+    margin-right: 4px !important;
+}

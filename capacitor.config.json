@@ -1,0 +1,23 @@
+{
+  "appId": "az.horosho.aaf",
+  "appName": "AAF",
+  "webDir": "./dist",
+  "server": {
+    "cleartext": true,
+    "androidScheme": "http"
+  },
+  "plugins": {
+    "FirebaseAuthentication": {
+      "skipNativeAuth": false,
+      "providers": [
+        "google.com"
+      ]
+    },
+    "GoogleMaps": {
+      "apiKey": {
+        "android": "AIzaSyCo2SJq2InX6iCZxW6BMMBn7RJ04XNUjco",
+        "ios": "XXXXXXXXXXXX"
+      }
+    }
+  }
+}

@@ -1,0 +1,58 @@
+{
+  "name": "capacitor-app",
+  "version": "1.0.0",
+  "description": "An Amazing Capacitor App",
+  "type": "module",
+  "keywords": [
+    "capacitor",
+    "mobile"
+  ],
+  "scripts": {
+    "start": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@capacitor-community/background-geolocation": "^1.2.22",
+    "@capacitor-firebase/authentication": "^7.2.0",
+    "@capacitor/android": "^7.2.0",
+    "@capacitor/app": "^7.0.1",
+    "@capacitor/camera": "^7.0.1",
+    "@capacitor/core": "latest",
+    "@capacitor/device": "^7.0.1",
+    "@capacitor/filesystem": "^7.1.1",
+    "@capacitor/geolocation": "^7.1.2",
+    "@capacitor/google-maps": "^7.0.2",
+    "@capacitor/ios": "^7.2.0",
+    "@capacitor/preferences": "^7.0.1",
+    "@capacitor/push-notifications": "^7.0.1",
+    "@capacitor/splash-screen": "latest",
+    "@hookform/resolvers": "^5.0.1",
+    "@ionic/cli": "^7.2.1",
+    "@ionic/react": "^8.5.7",
+    "@ionic/react-router": "^8.5.7",
+    "firebase": "^11.8.1",
+    "ionicons": "^8.0.8",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "react-router-dom": "^5.3.4",
+    "zod": "^3.25.42"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "latest",
+    "@eslint/js": "^9.25.0",
+    "@types/react": "^19.1.2",
+    "@types/react-dom": "^19.1.2",
+    "@types/react-router-dom": "^5.3.3",
+    "@vitejs/plugin-react": "^4.4.1",
+    "eslint": "^9.25.0",
+    "eslint-plugin-react-hooks": "^5.2.0",
+    "eslint-plugin-react-refresh": "^0.4.19",
+    "globals": "^16.0.0",
+    "typescript": "~5.8.3",
+    "typescript-eslint": "^8.30.1",
+    "vite": "^6.3.5"
+  },
+  "author": "Orkhan",
+  "license": "ISC"
+}
