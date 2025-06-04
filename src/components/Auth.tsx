@@ -15,7 +15,8 @@ import {
     IonIcon,
     IonText,
     IonAlert,
-    IonLoading
+    IonLoading,
+    useIonAlert
 } from '@ionic/react';
 
 import { logoApple, logoGoogle } from "ionicons/icons";
@@ -41,6 +42,7 @@ const Auth: React.FC = () => {
     const [loading, setLoading] = useState(false);
 
     const httpClient = new HttpClient();
+    const [presentAlert] = useIonAlert();
 
     const validatePassword = (password: string) => {
         if (password.length < 8) {
@@ -58,7 +60,15 @@ const Auth: React.FC = () => {
 
     const oauth2 = async (provider: string) =>{
         if (provider === "google") {
-            await loginWithGoogle();
+            await loginWithGoogle((errorMsg?: string) => {
+                if (errorMsg) {
+                    presentAlert({
+                        header: 'Authentication Error',
+                        message: errorMsg,
+                        buttons: ['OK']
+                    });
+                }
+            });
         }
     }
 
@@ -275,7 +285,7 @@ const Auth: React.FC = () => {
                                     password,
                                     code: data.otp
                                 }).then(r => {
-                                    if (r.success && r.friendship_uuid === null) {
+                                    if (r.success && r.registered === null) {
                                         setErrorMessage("Invalid OTP code !");
                                         setShowErrorAlert(true);
                                     } else {

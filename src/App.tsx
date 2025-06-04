@@ -49,9 +49,10 @@ export default function App() {
         };
 
         const initPushNotifications = async () => {
+            //TODO change its value to false
             const token = await SharedPreferences.getToken('refresh');
             if (!token) {
-                setTokenPresented(false);
+                setTokenPresented(true);
                 return;
             }
 

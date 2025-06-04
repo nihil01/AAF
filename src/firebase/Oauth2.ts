@@ -1,7 +1,7 @@
 import { FirebaseAuthentication } from '@capacitor-firebase/authentication';
 import { HttpClient } from "../net/HttpClient.ts";
 
-export const loginWithGoogle = async () => {
+export const loginWithGoogle = async (onError?: (msg?: string) => void) => {
     try {
         const result = await FirebaseAuthentication.signInWithGoogle({
             scopes: ['email', 'profile'],
@@ -22,14 +22,21 @@ export const loginWithGoogle = async () => {
             if (r.success) {
                 console.log("Logged in successfully");
                 location.href = "/";
+                if (onError) onError();
             } else {
                 console.log("Unsuccessful login !");
+                if (onError) onError("Unsuccessful login!");
             }
         });
-
-
-    } catch (err) {
+    } catch (err: any) {
         console.error('❌ Login error:', err);
+        if (onError) {
+            if (err && err.message && err.message.includes('not supported')) {
+                onError('Google authentication is not supported on this device.');
+            } else {
+                onError('Login error: ' + (err?.message || 'Unknown error'));
+            }
+        }
     }
 };
 

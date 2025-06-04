@@ -1,8 +1,10 @@
-import {useState} from 'react';
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Camera, CameraResultType } from '@capacitor/camera';
+import CarModifications from './CarModifications';
 import * as z from 'zod';
+
 import {
   IonButton,
   IonCard,
@@ -21,10 +23,15 @@ import {
   IonList,
   IonListHeader,
   IonTextarea,
-  IonImg, IonAlert
+  IonImg, IonAlert,
+  IonToolbar,
+  IonButtons,
+  IonTitle,
+  IonHeader
 } from '@ionic/react';
 import { car, add, flash, settings, calendar, camera, image } from 'ionicons/icons';
 import './CarComponent.css';
+
 
 const carFormSchema = z.object({
   make: z.string().min(1, 'Make is required'),
@@ -33,7 +40,7 @@ const carFormSchema = z.object({
   engineSpecs: z.string().min(1, 'Engine specs are required'),
   horsePower: z.number().min(1, 'Horsepower must be greater than 0'),
   torque: z.string().min(1, 'Torque is required'),
-  zeroToSixty: z.string().min(1, '0-60 time is required'),
+  zeroToHundred: z.string().min(1, '0-100 time is required'),
   story: z.string().min(10, 'Story must be at least 10 characters'),
   photos: z.array(z.string()).max(5, 'Maximum 5 photos allowed')
 });
@@ -52,9 +59,11 @@ export function CarComponent() {
   const [photos, setPhotos] = useState<string[]>([]);
   const [modifications, setModifications] = useState<string[]>([]);
   const [showPhotoModal, setShowPhotoModal] = useState(false);
-  const [newModification, setNewModification] = useState('');
   const [showPhotoAlert, setShowPhotoAlert] = useState(false);
 
+  const [showModificationsModal, setShowModificationsModal] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [selectedModification, setSelectedModification] = useState<string | null>(null);
 
 const showSavesPictures = () => {
 
@@ -79,7 +88,7 @@ const showSavesPictures = () => {
       engineSpecs: '',
       horsePower: 0,
       torque: '',
-      zeroToSixty: '',
+      zeroToHundred: '',
       story: '',
     },
   });
@@ -117,7 +126,7 @@ const showSavesPictures = () => {
       resultType: CameraResultType.Uri,
     });
 
-    if (image) {
+    if (image && image.webPath) {
       setPhotos([...photos, image.webPath]);
     }
 
@@ -133,16 +142,18 @@ const showSavesPictures = () => {
     });
 
     if (photos) {
-      setPhotos([...photos.map((photo) => photo.webPath)]);
+      setPhotos([
+        ...photos
+          .map((photo) => photo.webPath)
+          .filter((webPath): webPath is string => typeof webPath === 'string')
+      ]);
     }
 
   };
 
-  const addModification = () => {
-    if (newModification.trim()) {
-      setModifications([...modifications, newModification.trim()]);
-      setNewModification('');
-    }
+
+  const showModificationDialog = () => {
+    setShowModificationsModal(true);
   };
 
   return (
@@ -186,15 +197,15 @@ const showSavesPictures = () => {
                 <IonRow>
                   <IonCol size="12" sizeMd="6">
                     <IonItem>
-                      <IonLabel position="floating" style={{fontFamily: 'Arial, sans-serif', fontSize: '0.8em'}}>Make</IonLabel>
-                      <IonInput style={{fontFamily: 'Arial, sans-serif'}} {...form.register('make')} placeholder="Ferrari, Lamborghini, BMW..." />
+                      <IonLabel position="floating" style={{fontFamily: 'Arial, sans-serif', fontSize: '0.85em'}}>Make</IonLabel>
+                      <IonInput style={{fontFamily: 'Arial, sans-serif', fontSize: '0.85em'}} {...form.register('make')} placeholder="Ferrari, Lamborghini, BMW..." />
                     </IonItem>
                   </IonCol>
 
                   <IonCol size="12" sizeMd="6">
                     <IonItem>
-                      <IonLabel position="floating" style={{fontFamily: 'Arial, sans-serif', fontSize: '0.8em'}}>Model</IonLabel>
-                      <IonInput style={{fontFamily: 'Arial, sans-serif'}} {...form.register('model')} placeholder="F40, Aventador, M3..." />
+                      <IonLabel position="floating" style={{fontFamily: 'Arial, sans-serif', fontSize: '0.85em'}}>Model</IonLabel>
+                      <IonInput style={{fontFamily: 'Arial, sans-serif', fontSize: '0.85em'}} {...form.register('model')} placeholder="F40, Aventador, M3..." />
                     </IonItem>
                   </IonCol>
                 </IonRow>
@@ -202,15 +213,15 @@ const showSavesPictures = () => {
                 <IonRow>
                   <IonCol size="12" sizeMd="6">
                     <IonItem>
-                      <IonLabel position="floating" style={{fontFamily: 'Arial, sans-serif', fontSize: '0.8em'}}>Year</IonLabel>
-                      <IonInput type="number" style={{fontFamily: 'Arial, sans-serif'}} {...form.register('year', { valueAsNumber: true })} />
+                      <IonLabel position="floating" style={{fontFamily: 'Arial, sans-serif', fontSize: '0.85em'}}>Year</IonLabel>
+                      <IonInput type="number" style={{fontFamily: 'Arial, sans-serif', fontSize: '0.85em'}} {...form.register('year', { valueAsNumber: true })} />
                     </IonItem>
                   </IonCol>
 
                   <IonCol size="12" sizeMd="6">
                     <IonItem>
-                      <IonLabel position="floating" style={{fontFamily: 'Arial, sans-serif', fontSize: '0.8em'}}>Engine Specs</IonLabel>
-                      <IonInput style={{fontFamily: 'Arial, sans-serif'}} {...form.register('engineSpecs')} placeholder="V8, 4.0L Twin-Turbo..." />
+                      <IonLabel position="floating" style={{fontFamily: 'Arial, sans-serif', fontSize: '0.85em'}}>Engine Specs</IonLabel>
+                      <IonInput style={{fontFamily: 'Arial, sans-serif', fontSize: '0.85em'}} {...form.register('engineSpecs')} placeholder="V8, 4.0L Twin-Turbo..." />
                     </IonItem>
                   </IonCol>
                 </IonRow>
@@ -218,22 +229,22 @@ const showSavesPictures = () => {
                 <IonRow>
                   <IonCol size="12" sizeMd="4">
                     <IonItem>
-                      <IonLabel position="floating" style={{fontFamily: 'Arial, sans-serif', fontSize: '0.8em'}}>Horsepower</IonLabel>
-                      <IonInput type="number" style={{fontFamily: 'Arial, sans-serif'}} {...form.register('horsePower', { valueAsNumber: true })} />
+                      <IonLabel position="floating" style={{fontFamily: 'Arial, sans-serif', fontSize: '0.85em'}}>Horsepower</IonLabel>
+                      <IonInput type="number" style={{fontFamily: 'Arial, sans-serif', fontSize: '0.85em'}} {...form.register('horsePower', { valueAsNumber: true })} />
                     </IonItem>
                   </IonCol>
 
                   <IonCol size="12" sizeMd="4">
                     <IonItem>
-                      <IonLabel position="floating" style={{fontFamily: 'Arial, sans-serif', fontSize: '0.8em'}}>Torque</IonLabel>
-                      <IonInput style={{fontFamily: 'Arial, sans-serif'}} {...form.register('torque')} placeholder="500 lb-ft" />
+                      <IonLabel position="floating" style={{fontFamily: 'Arial, sans-serif', fontSize: '0.85em'}}>Torque</IonLabel>
+                      <IonInput style={{fontFamily: 'Arial, sans-serif', fontSize: '0.85em'}} {...form.register('torque')} placeholder="500 lb-ft" />
                     </IonItem>
                   </IonCol>
 
                   <IonCol size="12" sizeMd="4">
                     <IonItem>
-                      <IonLabel position="floating" style={{fontFamily: 'Arial, sans-serif', fontSize: '0.8em'}}>0-60 Time</IonLabel>
-                      <IonInput style={{fontFamily: 'Arial, sans-serif'}} {...form.register('zeroToSixty')} placeholder="3.2s" />
+                      <IonLabel position="floating" style={{fontFamily: 'Arial, sans-serif', fontSize: '0.85em'}}>0-100 Time</IonLabel>
+                      <IonInput style={{fontFamily: 'Arial, sans-serif', fontSize: '0.85em'}} {...form.register('zeroToHundred')} placeholder="3.2s" />
                     </IonItem>
                   </IonCol>
                 </IonRow>
@@ -241,32 +252,31 @@ const showSavesPictures = () => {
                 <IonRow>
                   <IonCol size="12">
                     <IonItem>
-                      <IonLabel position="floating" style={{fontFamily: 'Arial, sans-serif', fontSize: '0.8em'}}>Your Car's Story</IonLabel>
-                      <IonTextarea style={{fontFamily: 'Arial, sans-serif'}} {...form.register('story')} placeholder="Tell us about your car..." />
+                      <IonLabel position="floating" style={{fontFamily: 'Arial, sans-serif', fontSize: '0.85em'}}>Your Car's Story</IonLabel>
+                      <IonTextarea style={{fontFamily: 'Arial, sans-serif', fontSize: '0.85em'}} {...form.register('story')} placeholder="Tell us about your car..." />
                     </IonItem>
                   </IonCol>
                 </IonRow>
 
                 <IonRow>
                   <IonCol size="12">
-                    <IonItem>
-                      <IonLabel position="floating" style={{fontFamily: 'Arial, sans-serif', fontSize: '0.8em'}}>Modifications</IonLabel>
-                      <IonInput
-                        value={newModification}
-                        onIonChange={e => setNewModification(e.detail.value || '')}
-                        placeholder="Add modification..."
-                        style={{fontFamily: 'Arial, sans-serif'}}
-                      />
-                    </IonItem>
-                    <IonButton expand="block" onClick={addModification}>
+                    
+                  <IonList>
+                    {
+                      modifications.length > 0 ? modifications.map((mod, index) => (
+                        <IonItem key={index}>
+                          <IonLabel style={{fontSize: '0.8em'}}>{mod}</IonLabel>
+                        </IonItem>
+                      )): <IonItem>No modifications yet, try adding some</IonItem>
+                    }
+                    </IonList>
+
+                    <IonButton expand="block" onClick={() => showModificationDialog()}>
                       <IonIcon slot="start" icon={add} />
                       Add Modification
                     </IonButton>
-                    {modifications.map((mod, index) => (
-                      <IonItem key={index}>
-                        <IonLabel style={{fontSize: '0.8em'}}>{mod}</IonLabel>
-                      </IonItem>
-                    ))}
+
+
                   </IonCol>
                 </IonRow>
 
@@ -317,7 +327,7 @@ const showSavesPictures = () => {
           </IonCardHeader>
           <IonCardContent>
             <p><strong>Engine:</strong> {car.engineSpecs}</p>
-            <p><strong>Performance:</strong> {car.horsePower}hp, {car.torque} torque, 0-60 in {car.zeroToSixty}</p>
+            <p><strong>Performance:</strong> {car.horsePower}hp, {car.torque} torque, 0-60 in {car.zeroToHundred}</p>
             <p><strong>Story:</strong> {car.story}</p>
             {car.modifications.length > 0 && (
               <>
@@ -332,6 +342,60 @@ const showSavesPictures = () => {
           </IonCardContent>
         </IonCard>
       ))}
+
+      {/* Modification Modal */}
+      <IonModal isOpen={showModificationsModal} onDidDismiss={() => {
+        setShowModificationsModal(false);
+        setSelectedCategory(null);
+        setSelectedModification(null);
+      }}>
+        <IonHeader>
+          <IonToolbar>
+            <IonTitle>Select Modification</IonTitle>
+            <IonButtons slot="end">
+              <IonButton onClick={() => setShowModificationsModal(false)}>Close</IonButton>
+            </IonButtons>
+          </IonToolbar>
+        </IonHeader>
+        <IonContent>
+          {!selectedCategory ? (
+            <IonList>
+              <IonListHeader>Choose Category</IonListHeader>
+              {CarModifications.getModifications().map((cat) => (
+                <IonItem button key={cat} onClick={() => setSelectedCategory(cat)}>
+                  <IonLabel>{cat}</IonLabel>
+                </IonItem>
+              ))}
+            </IonList>
+          ) : (
+            <>
+              <IonList>
+                <IonListHeader>{selectedCategory}</IonListHeader>
+                {CarModifications.getChosenModification(selectedCategory).map((mod) => (
+                  <IonItem button key={mod} onClick={() => setSelectedModification(mod)}>
+                    <IonLabel>{mod}</IonLabel>
+                  </IonItem>
+                ))}
+              </IonList>
+              <IonButton expand="block" onClick={() => setSelectedCategory(null)} style={{marginTop: 10}}>Back to Categories</IonButton>
+            </>
+          )}
+          {selectedModification && (
+            <IonButton expand="block" color="success" style={{marginTop: 20}}
+              onClick={() => {
+                if (!modifications.includes(selectedModification)) {
+                  setModifications([...modifications, selectedModification]);
+                }
+                setShowModificationsModal(false);
+                setSelectedCategory(null);
+                setSelectedModification(null);
+              }}
+            >
+              Add "{selectedModification}" to Modifications
+            </IonButton>
+          )}
+        </IonContent>
+      </IonModal>
     </div>
   );
 }

@@ -7,7 +7,7 @@ export const RequestsPage = ({friends}: {friends: FriendsStruct}) => {
     const httpClient = new HttpClient();
     const [presentAlert] = useIonAlert();
 
-    const [awaiting, setAwaiting] = useState<AvailableUser[]>(friends.friendsAwaiting);
+    const [awaiting, setAwaiting] = useState<AvailableUser[]>(friends.friendsAwaiting || []);
 
     const showAlert = (message: string) => {
         presentAlert({
