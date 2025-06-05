@@ -27,7 +27,8 @@ import {
   IonToolbar,
   IonButtons,
   IonTitle,
-  IonHeader
+  IonHeader,
+  IonPage
 } from '@ionic/react';
 import { car, add, flash, settings, calendar, camera, image } from 'ionicons/icons';
 import './CarComponent.css';
@@ -53,7 +54,7 @@ interface CarDetails extends CarFormData {
   photos: string[];
 }
 
-export function CarComponent() {
+export function CarComponent({ setComponent }: { setComponent: (value: string | null) => void }) {
   const [cars, setCars] = useState<CarDetails[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [photos, setPhotos] = useState<string[]>([]);
@@ -157,12 +158,18 @@ const showSavesPictures = () => {
   };
 
   return (
-    <div className="container">
-      {/* Header */}
-      <div className="header">
-        <p>Showcase your automotive passion</p>
-      </div>
-
+    <IonPage>
+      <IonHeader>
+        <IonToolbar>
+          <IonButtons slot="start">
+            <IonButton onClick={() => setComponent(null)}>
+              Back
+            </IonButton>
+          </IonButtons>
+          <IonTitle>Car Details</IonTitle>
+        </IonToolbar>
+      </IonHeader>
+      <IonContent fullscreen >
       {/* Add Car Button */}
       {!showForm && (
         <div className="add-car-button">
@@ -396,7 +403,8 @@ const showSavesPictures = () => {
           )}
         </IonContent>
       </IonModal>
-    </div>
+      </IonContent>
+    </IonPage>
   );
 }
 

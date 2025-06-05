@@ -11,6 +11,8 @@
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  --ion-text-color: red;
+  --ion-tab-bar-background: rgb(19, 14, 14);
 }
 
 a {
