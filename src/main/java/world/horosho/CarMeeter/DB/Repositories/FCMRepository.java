@@ -5,5 +5,5 @@ import reactor.core.publisher.Flux;
 import world.horosho.CarMeeter.DB.Models.POST.FCM;
 
 public interface FCMRepository extends ReactiveCrudRepository<FCM, Long> {
-    Flux<FCM> findByUserId(int id);
+    Flux<FCM> findByUserId(long id);
 }

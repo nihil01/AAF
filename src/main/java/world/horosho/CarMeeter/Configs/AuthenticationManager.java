@@ -61,8 +61,8 @@ public class AuthenticationManager implements ReactiveAuthenticationManager {
                                     return userResponse;
                                 }
                             };
-                            authenticatedToken.setAuthenticated(true);
 
+                            authenticatedToken.setAuthenticated(true);
                             return Mono.just(authenticatedToken);
                         });
                 });

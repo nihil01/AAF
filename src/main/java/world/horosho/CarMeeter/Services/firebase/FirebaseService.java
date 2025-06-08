@@ -14,20 +14,30 @@ public class FirebaseService implements FirebaseUtilities{
     private final FCMRepository fcmRepository;
     private final UserRepository userRepository;
 
-    public Mono<String> registerToken(String username, String token, String deviceID) {
-        return userRepository.findByUsername(username)
-            .switchIfEmpty(Mono.error(new RuntimeException("User not found with username: " + username)))
-            .flatMap(projection -> projectionToFCM(projection, token, deviceID)
-                .onErrorResume(e -> Mono.error(new RuntimeException("Failed to create FCM projection: " + e.getMessage())))
-            .flatMap(fcm -> fcmRepository.save(fcm)
-                .onErrorResume(e -> Mono.error(new RuntimeException("Failed to save FCM token: " + e.getMessage()))))
-            .thenReturn("FCM data has been written in DB!")
-            .onErrorResume(e -> {
-                System.err.println("Error registering FCM token: " + e.getMessage());
-                return Mono.error(e);
-            }));
-    }
-
+public Mono<String> registerToken(long id, String token, String deviceID) {
+    return userRepository.findById(id)
+        .switchIfEmpty(Mono.error(new RuntimeException("User not found with id: " + id)))
+        .flatMap(projection -> userToFCM(projection, token, deviceID)
+        .onErrorResume(e -> Mono.error(new RuntimeException("Failed to create FCM projection: "
+                + e.getMessage())))
+        .flatMap(fcmToken -> fcmRepository.findByUserId(id)
+        .collectList()
+        .filter(fcms -> fcms.stream().anyMatch(existing -> existing.getFcm_token().equals(token)))
+        .hasElement()
+        .flatMap(exists -> {
+            if (exists) {
+                return Mono.error(new RuntimeException("FCM token already exists"));
+            }
+            return fcmRepository.save(fcmToken).then();
+        }))
+        .onErrorResume(e -> Mono.error(new RuntimeException("Failed to save FCM token: "
+                + e.getMessage()))))
+        .thenReturn("FCM data has been written in DB!")
+        .onErrorResume(e -> {
+            System.err.println("Error registering FCM token: " + e.getMessage());
+            return Mono.error(e);
+        });
+}
     public Mono<Void> sendFriendshipNotification(int userID, String friend) {
         return fcmRepository.findByUserId(userID)
             .collectList()
@@ -79,11 +89,12 @@ public class FirebaseService implements FirebaseUtilities{
             try {
                 FirebaseMessaging.getInstance().send(message);
                 System.out.println("Successfully sent message");
-                return null;
             } catch (FirebaseMessagingException e) {
                 System.err.println("Error sending message: " + e.getMessage());
-                throw new RuntimeException(e);
             }
+
+            return Mono.empty();
+
             })
             .doOnSuccess(unused -> System.out.println("Successfully sent message"))
             .doOnError(e -> System.err.println("Error sending message: " + e.getMessage()))

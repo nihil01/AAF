@@ -56,7 +56,7 @@ public class MailService implements MailContract {
                 .then(request.theme().equals("RESET_PASS") ? setResetOtp(request.email(), otp)
                         : request.theme().equals("CONFIRM_EMAIL") ? setRegisterOtp(request.email(), otp): Mono.empty())
 
-                .thenReturn(new UserResponse(request.email(), request.username(), "EMAIL_AWAITING", true));
+                .thenReturn(new UserResponse(0, request.email(), request.username(), "EMAIL_AWAITING", true));
             } catch (MessagingException e) {
                 return Mono.error(new RuntimeException(e));
             }

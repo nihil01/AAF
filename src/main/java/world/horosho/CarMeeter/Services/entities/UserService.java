@@ -35,8 +35,8 @@ public class UserService implements UserUtilities{
                 System.err.println("SQL Error during user lookup: " + e.getMessage());
                 return Mono.empty();
             })
-            .flatMap(existingUser -> Mono.just(new UserResponse("USER EXISTS", "", Instant.now().toString(),
-                    false)))
+            .flatMap(existingUser -> Mono.just(new UserResponse(0, "USER EXISTS",
+                    "", Instant.now().toString(), false)))
             .switchIfEmpty(
                 Mono.defer(() ->
                     checkUserPasswordLength(user.getPassword())
@@ -68,7 +68,7 @@ public class UserService implements UserUtilities{
                                     } else {
                                         System.out.println("Not equals !!");
                                         //* handle invalid code
-                                        return Mono.just(new UserResponse("", "",
+                                        return Mono.just(new UserResponse(0, "", "",
                                                 Instant.now().toString(), false));
                                     }
                                 })
@@ -77,7 +77,7 @@ public class UserService implements UserUtilities{
                                 ));
                             }else{
                                 //* invalid password length
-                                return Mono.just(new UserResponse("", "", Instant.now().toString(),
+                                return Mono.just(new UserResponse(0, "", "", Instant.now().toString(),
                                         false));
                             }
                         })
@@ -91,11 +91,11 @@ public class UserService implements UserUtilities{
                 if(passwordEncoder.matches(user.getPassword(),existingUser.getPassword())){
                     return mapToUserResponse(existingUser);
                 }else{
-                    return Mono.just(new UserResponse("", "",
+                    return Mono.just(new UserResponse(0, "", "",
                         Instant.now().toString(), false));
                 }
             })
-            .switchIfEmpty(Mono.just(new UserResponse("", "",
+            .switchIfEmpty(Mono.just(new UserResponse(0, "", "",
                 Instant.now().toString(), false)));
     }
 
@@ -109,7 +109,7 @@ public class UserService implements UserUtilities{
                     mailService.sendEmail(new MailRequest(user.getUsername(), user.getEmail(),
                         "", ip, "RESET_PASS")));
         }
-        return Mono.just(new UserResponse("", "",
+        return Mono.just(new UserResponse(0, "", "",
                 Instant.now().toString(), false));
     }
 
@@ -153,7 +153,7 @@ public class UserService implements UserUtilities{
     public Mono<UserResponse> retrieveUser(String email){
         return userRepository.findByEmail(email)
             .flatMap(this::mapToUserResponse)
-            .switchIfEmpty(Mono.just(new UserResponse("", ""
+            .switchIfEmpty(Mono.just(new UserResponse(0, "", ""
                     , "", false)));
     }
 

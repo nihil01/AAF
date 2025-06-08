@@ -24,7 +24,7 @@ public class FirebaseController {
         @AuthenticationPrincipal UserResponse principal
     ){
         return firebaseService
-            .registerToken(principal.getUsername(), data.token(), data.deviceID())
+            .registerToken(principal.getId(), data.token(), data.deviceID())
             .onErrorResume(throwable -> Mono.error(new RuntimeException("Could not save token !")));
     }
 

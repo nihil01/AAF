@@ -11,7 +11,7 @@ import java.util.Locale;
 public interface UserUtilities {
 
     default Mono<UserResponse> mapToUserResponse(User user){
-        return Mono.just(new UserResponse(user.getEmail(), user.getUsername(),
+        return Mono.just(new UserResponse(user.getId(), user.getEmail(), user.getUsername(),
                 user.getRegistered().toString(), true));
     }
 

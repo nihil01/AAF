@@ -49,7 +49,9 @@ public class SilentPushController {
         return Mono.empty();
     }
 
-    public static Mono<Void> broadcastProducer(@RequestBody UserCords cords, ObjectMapper mapper, ConcurrentHashMap<String, LatLng> userCords, ConcurrentHashMap<String, List<String>> userFriends, ConcurrentHashMap<String, WebSocketSession> activeConnections) {
+    public static Mono<Void> broadcastProducer(@RequestBody UserCords cords, ObjectMapper mapper,
+                    ConcurrentHashMap<String, LatLng> userCords, ConcurrentHashMap<String, List<String>> userFriends,
+                    ConcurrentHashMap<String, WebSocketSession> activeConnections) {
         userCords.put(cords.getUserName(), new LatLng(cords.getLatitude(), cords.getLongitude()));
 
         if (userFriends.get(cords.getUserName()) == null) {

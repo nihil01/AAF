@@ -76,6 +76,7 @@ public class JwtService {
             Map<String, Claim> claims = decodedJWT.getClaims();
 
             return new UserResponse(
+                claims.get("id").asLong(),
                 claims.get("email").asString(),
                 claims.get("username").asString(),
                 claims.get("registered").asString(),
@@ -86,34 +87,44 @@ public class JwtService {
 
     public Mono<String> refreshToken(String token) {
         return verifyToken(token)
-            .flatMap(valid -> {
-                if (!valid) {
-                    return Mono.just("INVALID_REFRESH_TOKEN");
-                }
-                return Mono.just(JWT.decode(token))
-                    .map(decodedJWT -> {
-                        Map<String, Claim> claims = decodedJWT.getClaims();
+        .flatMap(valid -> {
+            if (!valid) {
+                return Mono.just("INVALID_REFRESH_TOKEN");
+            }
 
-                        UserResponse userResponse = new UserResponse(
-                            claims.get("email").asString(),
-                            claims.get("username").asString(),
-                            claims.get("registered").asString(),
-                            true
-                        );
+            return isTokenRevoked(token)
+                .flatMap(isTokenRevoked -> {
+                    if (isTokenRevoked){
+                        return Mono.just("INVALID_REFRESH_TOKEN");
+                    }
 
-                        Map<String, Object> data = objectMapper.convertValue(
-                            userResponse,
-                            new TypeReference<>() {}
-                        );
+                    return Mono.fromCallable(() -> JWT.decode(token))
+                        .map(decodedJWT -> {
 
-                        return JWT.create()
-                            .withExpiresAt(Instant.now().plus(15, ChronoUnit.MINUTES))
-                            .withIssuedAt(Instant.now())
-                            .withIssuer("car-meeter-api")
-                            .withPayload(data)
-                            .sign(algorithm);
-                    });
+                            Map<String, Claim> claims = decodedJWT.getClaims();
+
+                            UserResponse userResponse = new UserResponse(
+                                    claims.get("id").asLong(),
+                                    claims.get("email").asString(),
+                                    claims.get("username").asString(),
+                                    claims.get("registered").asString(),
+                                    true
+                            );
+
+                            Map<String, Object> data = objectMapper.convertValue(
+                                    userResponse,
+                                    new TypeReference<>() {}
+                            );
+
+                            return JWT.create()
+                                .withExpiresAt(Instant.now().plus(15, ChronoUnit.MINUTES))
+                                .withIssuedAt(Instant.now())
+                                .withIssuer("car-meeter-api")
+                                .withPayload(data)
+                                .sign(algorithm);
+                });
             });
+        });
     }
 
 

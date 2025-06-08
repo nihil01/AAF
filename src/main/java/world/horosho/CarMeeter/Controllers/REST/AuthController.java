@@ -47,8 +47,8 @@ public class AuthController {
                         return getMono(userResponse);
 
                     }else if(userResponse.getRegistered().equals("EMAIL_AWAITING")){
-                        return Mono.just(ResponseEntity.status(HttpStatus.OK).body(new UserResponse("",
-                                "","",true)));
+                        return Mono.just(ResponseEntity.status(HttpStatus.OK).body(new UserResponse(
+                                0, "", "","",true)));
                     }
                     else {
                         return Mono.just(ResponseEntity.badRequest().body(userResponse));
@@ -60,14 +60,14 @@ public class AuthController {
                      yield apiClient.validateRequest(user.getIdToken(), user.getIpAddress())
                             .flatMap(this::getMono);
                 } else {
-                    yield Mono.just(ResponseEntity.badRequest().body(new UserResponse(
+                    yield Mono.just(ResponseEntity.badRequest().body(new UserResponse(0,
                             "Missing idToken for Google OAuth", null, null, false
                     )));
                 }
             }
 
             default -> Mono.just(ResponseEntity.badRequest().body(new UserResponse(
-                    "Unsupported authentication type", null, null, false
+                0, "Unsupported authentication type", null, null, false
             )));
         };
     }
