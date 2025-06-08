@@ -4,12 +4,32 @@ import {SharedPreferences} from "../utilities/SharedPreferences.ts";
 import type {AvailableUser, FriendsStruct} from "./FriendsStruct.ts";
 import type {UserCords} from "./AppStateConnection.ts";
 
+export interface Vehicle {
+    uuid: string;
+    id: number;
+    make: string;
+    model: string;
+    year: number;
+    engineSpecs: string;
+    horsePower: number;
+    torque: string;
+    zeroToHundred: string;
+    story: string;
+    modifications?: string;
+}
+
+export interface VehicleWithMedia extends Vehicle {
+    created_at: string;
+    photo_urls: string[];
+}
+
 export class HttpClient {
 
     private AUTH_BASE_URL = 'http://10.20.30.3:8080/api/v1/auth';
     private FRIENDS_BASE_URL = 'http://10.20.30.3:8080/api/v1/friends';
     private FIREBASE_BASE_URL = 'http://10.20.30.3:8080/api/v1/firebase';
     private SILENT_PUSH_BASE_URL = 'http://10.20.30.3:8080/api/v1/silent';
+    private CARS_BASE_URL = 'http://10.20.30.3:8080/api/v1/vehicles';
 
 
  //AUTHENTICATION
@@ -248,14 +268,23 @@ export class HttpClient {
             console.log("Trying to handle ...")
             await this.refreshToken();
             const accessToken = await SharedPreferences.getToken('access');
-            const newRequest = new Request(response.url, {
+            
+            // Create new request with the same properties
+            const newRequest = new Request(request.url, {
                 method: request.method,
                 headers: {
-                    ...Object.fromEntries(response.headers),
+                    ...Object.fromEntries(request.headers),
                     'Authorization': `Bearer ${accessToken}`
                 },
+                // For FormData, we need to use the original request's body
                 body: request.body
             });
+
+            // If the original request was a FormData, we need to ensure it's still valid
+            if (request.body instanceof FormData) {
+                // The FormData is still valid as it's a reference to the original
+                return await fetch(newRequest);
+            }
 
             return await fetch(newRequest);
         }
@@ -288,5 +317,91 @@ export class HttpClient {
                 await SharedPreferences.setToken('access', newAccessToken.slice("bearer".length).trim());
             }
         }
+    }
+
+    async submitVehicleData(formData: FormData): Promise<VehicleWithMedia> {
+        try {
+            const accessToken = await SharedPreferences.getToken('access');
+            
+            const request = new Request(`${this.CARS_BASE_URL}/submitVehicleData`, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'Authorization': `Bearer ${accessToken}`
+                },
+            });
+
+            const response = await this.handleResponse(await fetch(request), request);
+
+            if (!response.ok) {
+                throw new Error('Failed to submit car data');
+            }
+
+            const data = await response.json();
+            return data as VehicleWithMedia;
+
+        } catch (error) {
+            console.error('Error in submitCarData:', error);
+            throw error;
+        }
+    }
+
+    async getVehicleData(): Promise<VehicleWithMedia[]> {
+        try {
+            const accessToken = await SharedPreferences.getToken('access');
+            
+            const request = new Request(`${this.CARS_BASE_URL}/getVehicleData`, {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${accessToken}`
+                },
+            });
+
+            const response = await this.handleResponse(await fetch(request), request);
+
+            if (!response.ok) {
+                throw new Error('Failed to fetch vehicle data');
+            }
+
+            const data = await response.json();
+            return data as VehicleWithMedia[];
+
+        } catch (error) {
+            console.error('Error in getVehicleData:', error);
+            throw error;
+        }
+    }
+
+    async deleteVehicle(vehicleUUID: string): Promise<void> {
+        try {
+            const accessToken = await SharedPreferences.getToken('access');
+            
+            const request = new Request(`${this.CARS_BASE_URL}/deleteVehicle/${vehicleUUID}`, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${accessToken}`
+                },
+            });
+
+            const response = await this.handleResponse(await fetch(request), request);
+
+            if (!response.ok) {
+                throw new Error('Failed to delete vehicle');
+            }
+        } catch (error) {
+            console.error('Error in deleteVehicle:', error);
+            throw error;
+        }
+    }
+
+    async logout(): Promise<void> {
+        const refreshToken = await SharedPreferences.getToken('refresh');
+        await fetch(`${this.AUTH_BASE_URL}/logout`, {
+            headers: {
+                'Authorization': `Bearer ${refreshToken}`
+            }
+        });
+
+        await SharedPreferences.clearAll();
     }
 }

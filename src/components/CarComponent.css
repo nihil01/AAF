@@ -27,6 +27,7 @@
     overflow: hidden;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
     transition: transform 0.3s ease;
+    position: relative;
 }
 
 .car-card:hover {
@@ -96,4 +97,21 @@
 
 .car-details-modal {
     padding: 20px;
+}
+
+.car-actions {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    display: flex;
+    gap: 8px;
+    z-index: 2;
+}
+
+.car-actions ion-button {
+    --padding-start: 8px;
+    --padding-end: 8px;
+    --padding-top: 8px;
+    --padding-bottom: 8px;
+    margin: 0;
 }

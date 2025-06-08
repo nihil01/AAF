@@ -1,10 +1,16 @@
-import { IonButton, IonButtons, IonHeader, IonToolbar, IonPage, IonTitle, IonContent, IonList, IonItem, IonLabel, IonToggle, IonSelect, IonSelectOption, IonNote } from "@ionic/react"
+import { IonButton, IonButtons, IonHeader, IonToolbar, IonPage, IonTitle, IonContent, IonList, IonItem, IonLabel, IonToggle, IonSelect, IonSelectOption, IonNote, IonIcon } from "@ionic/react"
 import { useEffect, useState } from "react";
 import { PushNotifications } from "@capacitor/push-notifications";
+import { moon, sunny, notificationsCircleOutline, languageOutline, logOut, mail, arrowBack } from "ionicons/icons";
+import { useTheme } from "../context/ThemeContext";
+import { useLanguage } from '../context/LanguageContext';
+import type { Language } from '../utilities/translations';
+import { SharedPreferences } from "../utilities/SharedPreferences";
+import { HttpClient } from "../net/HttpClient";
 
-export const SettingsComponent = ({ setComponent }: { setComponent: (value: string | null) => void }) =>{
-  const [darkMode, setDarkMode] = useState(false);
-  const [language, setLanguage] = useState('en');
+export const SettingsComponent = ({ setComponent }: { setComponent: (value: string | null) => void }) => {
+  const { isDark, toggleTheme } = useTheme();
+  const { currentLanguage, setLanguage, translations } = useLanguage();
   const [notifications, setNotifications] = useState(false);
   const appVersion = '1.0.0';
 
@@ -12,6 +18,9 @@ export const SettingsComponent = ({ setComponent }: { setComponent: (value: stri
     checkNotificationPermission();
   }, []);
 
+  const handleApplicationTheme = () => {
+    toggleTheme();
+  };
 
   const checkNotificationPermission = async () => {
     const permissionStatus = await PushNotifications.checkPermissions();
@@ -29,12 +38,20 @@ export const SettingsComponent = ({ setComponent }: { setComponent: (value: stri
   };
 
   const handleLogout = () => {
-    // TODO: Implement logout logic
-    alert('Logged out!');
+    let client = new HttpClient();
+    client.logout().then(() => {
+      location.href = '/';
+    });
+
   };
 
   const handleContactAdmin = () => {
     window.location.href = 'mailto:admin@example.com?subject=Support%20Request';
+  };
+
+  const handleLanguageChange = async (e: CustomEvent) => {
+    const newLang = e.detail.value as Language;
+    await setLanguage(newLang);
   };
 
   return (
@@ -43,47 +60,52 @@ export const SettingsComponent = ({ setComponent }: { setComponent: (value: stri
         <IonToolbar>
           <IonButtons slot="start">
             <IonButton onClick={() => setComponent(null)}>
-              Back
+              <IonIcon icon={arrowBack}/>
             </IonButton>
           </IonButtons>
-          <IonTitle>Settings</IonTitle>
+          <IonTitle>{translations.common.settingsTitle}</IonTitle>
         </IonToolbar>
       </IonHeader>
       <IonContent fullscreen>
         <IonList>
           <IonItem>
-            <IonLabel>Dark Mode</IonLabel>
-            <IonToggle checked={darkMode} onIonChange={e => setDarkMode(e.detail.checked)} />
+            <IonIcon icon={isDark ? sunny : moon}/>
+            <IonLabel>{translations.settings.darkMode}</IonLabel>
+            <IonToggle slot="end" checked={isDark} onIonChange={handleApplicationTheme} />
           </IonItem>
 
           <IonItem>
-            <IonLabel>Notifications</IonLabel>
-            <IonToggle checked={notifications} onIonChange={e => handleNotifications(e.detail.checked)} />
+            <IonIcon icon={notificationsCircleOutline}/>
+            <IonLabel>{translations.settings.notifications}</IonLabel>
+            <IonToggle slot="end" checked={notifications} onIonChange={e => handleNotifications(e.detail.checked)} />
           </IonItem>
 
           <IonItem>
-            <IonLabel>Language</IonLabel>
-            <IonSelect value={language} placeholder="Select Language" onIonChange={e => setLanguage(e.detail.value)}>
-              <IonSelectOption value="az">Azerbaijani</IonSelectOption>
+            <IonIcon icon={languageOutline}/>
+            <IonLabel>{translations.settings.language}</IonLabel>
+            <IonSelect slot="end" value={currentLanguage} placeholder={translations.settings.language} onIonChange={handleLanguageChange}>
               <IonSelectOption value="en">English</IonSelectOption>
-              <IonSelectOption value="ru">Russian</IonSelectOption>
+              <IonSelectOption value="az">Azərbaycan</IonSelectOption>
+              <IonSelectOption value="ru">Русский</IonSelectOption>
             </IonSelect>
           </IonItem>
 
           <IonItem button onClick={handleContactAdmin}>
-            <IonLabel>Contact Admin</IonLabel>
+            <IonIcon slot="end" icon={mail}/>
+            <IonLabel>{translations.settings.contactAdmin}</IonLabel>
           </IonItem>
 
           <IonItem button onClick={handleLogout}>
-            <IonLabel color="danger">Log Out</IonLabel>
+            <IonLabel color="danger">{translations.settings.logout}</IonLabel>
+            <IonIcon slot="end" icon={logOut}/>
           </IonItem>
 
           <IonItem>
-            <IonLabel>App Version</IonLabel>
+            <IonLabel>{translations.settings.appVersion}</IonLabel>
             <IonNote slot="end">{appVersion}</IonNote>
           </IonItem>
         </IonList>
       </IonContent>
     </IonPage>
-  )
-}
+  );
+};

@@ -3,7 +3,9 @@ import {
     IonContent,
     IonToggle,
     IonBackButton,
-    IonSpinner
+    IonSpinner,
+    IonLabel,
+    IonButton
 } from "@ionic/react";
 import { GoogleMap, type Marker } from "@capacitor/google-maps";
 import React, { useEffect, useRef, useState } from "react";
@@ -11,6 +13,8 @@ import { registerPlugin } from "@capacitor/core";
 import type { BackgroundGeolocationPlugin } from "@capacitor-community/background-geolocation";
 import {destroy, initialize, sendData, setMessageCallback} from "../net/AppStateConnection.ts";
 import {Geolocation} from "@capacitor/geolocation";
+import { useTheme } from "../context/ThemeContext";
+import { useLanguage } from '../context/LanguageContext';
 
 const BackgroundGeolocation: BackgroundGeolocationPlugin = registerPlugin("BackgroundGeolocation");
 
@@ -20,6 +24,8 @@ interface GoogleMapPageProps {
 }
 
 export const GoogleMapPage: React.FC<GoogleMapPageProps> = ({ mapClicked, onMapClick }) => {
+    const { toggleTheme } = useTheme();
+    const { translations } = useLanguage();
     const mapRef = useRef<HTMLElement | null>(null);
     const mapInstance = useRef<GoogleMap | null>(null);
 
@@ -27,10 +33,9 @@ export const GoogleMapPage: React.FC<GoogleMapPageProps> = ({ mapClicked, onMapC
     const [isMapLoading, setIsMapLoading] = useState(true);
     const isConnectionInitialized = useRef(false);
 
-    const watcherId = useRef<"">();
+    const watcherId = useRef<string>("");
     const userMapMarkersRef = useRef<Record<string, Marker>>({});
-
-    const markerRef = useRef<Marker>(null);
+    const markerRef = useRef<Marker | null>(null);
 
     const handleLocationUpdate = async (
         latitude: number,
@@ -54,25 +59,21 @@ export const GoogleMapPage: React.FC<GoogleMapPageProps> = ({ mapClicked, onMapC
             await mapInstance.current?.removeMarker(existingMarker);
         }
 
-        // Добавляем новый маркер на карту
         const newMarker = await mapInstance.current?.addMarker(markerData);
         if (newMarker) {
             userMapMarkersRef.current[user] = newMarker;
         }
     };
 
-
-
     const toggleLocationTracking = async (checked: boolean) => {
         if (checked) {
-
             initialize();
-            setMessageCallback(handleLocationUpdate)
+            setMessageCallback(handleLocationUpdate);
 
             const id = await BackgroundGeolocation.addWatcher(
                 {
-                    backgroundMessage: "Cancel to prevent battery drain.",
-                    backgroundTitle: "Tracking You.",
+                    backgroundMessage: translations.map.locationNeeded,
+                    backgroundTitle: translations.map.trackingOn,
                     requestPermissions: true,
                     stale: false,
                     distanceFilter: 50,
@@ -80,7 +81,7 @@ export const GoogleMapPage: React.FC<GoogleMapPageProps> = ({ mapClicked, onMapC
                 (location, error) => {
                     if (error) {
                         if (error.code === "NOT_AUTHORIZED") {
-                            if (window.confirm("This app needs your location.\nOpen settings?")) {
+                            if (window.confirm(translations.map.openSettings)) {
                                 BackgroundGeolocation.openSettings();
                             }
                         }
@@ -99,22 +100,19 @@ export const GoogleMapPage: React.FC<GoogleMapPageProps> = ({ mapClicked, onMapC
             );
             watcherId.current = id;
         } else {
-
-            //logout
             destroy();
 
             if (watcherId.current) {
                 await BackgroundGeolocation.removeWatcher({ id: watcherId.current });
-                watcherId.current = undefined;
+                watcherId.current = "";
             }
 
-            if (isConnectionInitialized.current){
-                isConnectionInitialized.current = undefined;
+            if (isConnectionInitialized.current) {
+                isConnectionInitialized.current = false;
             }
         }
         setIsTracking(checked);
     };
-
 
     useEffect(() => {
         onMapClick(true);
@@ -159,7 +157,7 @@ export const GoogleMapPage: React.FC<GoogleMapPageProps> = ({ mapClicked, onMapC
                                     lat: data.latitude,
                                     lng: data.longitude
                                 },
-                                title: "Cords clicked",
+                                title: translations.map.cordsClicked,
                                 snippet: `${data.latitude.toFixed(2)} | ${data.longitude.toFixed(2)}`
                             });
 
@@ -171,18 +169,15 @@ export const GoogleMapPage: React.FC<GoogleMapPageProps> = ({ mapClicked, onMapC
                         });
 
                         await mapInstance.current.setOnInfoWindowClickListener(data => {
-
-                            //go to user's profile
-                            if (data.title != "Cords clicked"){
-                                sendData("disconnect", [0.0, 0.0])
+                            if (data.title !== translations.map.cordsClicked) {
+                                sendData("disconnect", [0.0, 0.0]);
                                 destroy();
-                                location.href = `/profile/${data.title}`
+                                location.href = `/profile/${data.title}`;
                             }
                         });
                     }
-
                 } else {
-                    console.error("Location permission not granted");
+                    console.error(translations.map.locationPermissionDenied);
                 }
             } catch (error) {
                 console.error("Error getting location:", error);
@@ -199,8 +194,12 @@ export const GoogleMapPage: React.FC<GoogleMapPageProps> = ({ mapClicked, onMapC
                 BackgroundGeolocation.removeWatcher({ id: watcherId.current });
             }
         };
-    }, []);
+    }, [translations]);
 
+    useEffect(() => {
+        toggleTheme(true);
+        return () => toggleTheme(false);
+    }, [toggleTheme]);
 
     return (
         <IonPage>
@@ -217,7 +216,7 @@ export const GoogleMapPage: React.FC<GoogleMapPageProps> = ({ mapClicked, onMapC
                     alignItems: 'center',
                     gap: '8px'
                 }}>
-                    <IonBackButton text="Back" defaultHref="/home" />
+                    <IonBackButton text={translations.common.back} defaultHref="/home" />
                 </div>
 
                 <div style={{
@@ -242,9 +241,9 @@ export const GoogleMapPage: React.FC<GoogleMapPageProps> = ({ mapClicked, onMapC
                             '--handle-height': '20px'
                         }}
                     />
-                    <span style={{ fontSize: '14px', color: '#333' }}>
-                        {isTracking ? 'Tracking On' : 'Tracking Off'}
-                    </span>
+                    <IonLabel style={{ fontSize: '14px', color: '#333' }}>
+                        {isTracking ? translations.map.trackingOn : translations.map.trackingOff}
+                    </IonLabel>
                 </div>
 
                 {isMapLoading && (
@@ -259,6 +258,7 @@ export const GoogleMapPage: React.FC<GoogleMapPageProps> = ({ mapClicked, onMapC
                         borderRadius: "12px"
                     }}>
                         <IonSpinner name="crescent" />
+                        <IonLabel>{translations.common.loading}</IonLabel>
                     </div>
                 )}
 

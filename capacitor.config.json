@@ -18,6 +18,16 @@
         "android": "AIzaSyCo2SJq2InX6iCZxW6BMMBn7RJ04XNUjco",
         "ios": "XXXXXXXXXXXX"
       }
+    },
+    "SplashScreen": {
+      "launchShowDuration": 1500,
+      "launchAutoHide": true,
+      "backgroundColor": "#FFFFFF",
+      "androidSplashResourceName": "splash_screen",
+      "androidScaleType": "CENTER_CROP",
+      "showSpinner": false,
+      "splashFullScreen": true,
+      "splashImmersive": true
     }
   }
 }

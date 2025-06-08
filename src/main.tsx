@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom/client';
 import App from './App.tsx';
 import {IonApp, setupIonicReact} from '@ionic/react';
 import { IonReactRouter } from '@ionic/react-router'; // Fixed import
+import { ThemeProvider } from './context/ThemeContext';
 
 import '@ionic/react/css/core.css';
 import '@ionic/react/css/normalize.css';
@@ -20,11 +21,11 @@ import './index.css';
 setupIonicReact();
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
-    <React.StrictMode>
+    <ThemeProvider>
         <IonApp>
             <IonReactRouter>
                 <App />
             </IonReactRouter>
         </IonApp>
-    </React.StrictMode>
+    </ThemeProvider>
 );

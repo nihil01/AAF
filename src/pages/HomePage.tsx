@@ -1,12 +1,14 @@
 import { IonContent, IonPage } from "@ionic/react";
-import { carOutline, peopleOutline, settingsOutline } from 'ionicons/icons';
+import { carOutline, settingsOutline } from 'ionicons/icons';
 import GridCard from "../components/GridCard";
 import { CarComponent } from "../components/CarComponent";
 import { useState } from "react";
 import { SettingsComponent } from "../components/SettingsComponent";
+import { useLanguage } from "../context/LanguageContext";
 
 export const HomePage = () => {
     const [activeComponent, setActiveComponent] = useState<string | null>(null);
+    const { translations } = useLanguage();
 
     const renderComponent = (activeComponent: string | null) => {
         switch (activeComponent) {
@@ -34,8 +36,8 @@ export const HomePage = () => {
                             justifyContent: 'space-between',
                             marginTop: '20px'
                         }}>
-                            <GridCard title="Моя машина" icon={carOutline} onClick={() => setActiveComponent('car')} />
-                            <GridCard title="Настройки" icon={settingsOutline} onClick={() => setActiveComponent('settings')} />
+                            <GridCard title={translations.homePage.myGarage} icon={carOutline} onClick={() => setActiveComponent('car')} />
+                            <GridCard title={translations.homePage.settings} icon={settingsOutline} onClick={() => setActiveComponent('settings')} />
                         </div>
                     )}
                 </div>
