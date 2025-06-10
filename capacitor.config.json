@@ -20,7 +20,7 @@
       }
     },
     "SplashScreen": {
-      "launchShowDuration": 1500,
+      "launchShowDuration": 1000,
       "launchAutoHide": true,
       "backgroundColor": "#FFFFFF",
       "androidSplashResourceName": "splash_screen",

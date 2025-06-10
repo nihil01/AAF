@@ -198,3 +198,14 @@ ion-segment-button.ion-activated {
   color: var(--ion-color-primary);
   font-weight: bold;
 }
+
+.segment-label {
+  font-size: 0.6em !important;
+  font-weight: 500;
+}
+
+ion-segment-button {
+  --padding-top: 8px;
+  --padding-bottom: 8px;
+  min-height: 40px;
+}

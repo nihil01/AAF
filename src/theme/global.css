@@ -16,6 +16,18 @@ ion-title {
   padding: 8px 0;
 }
 
+/* Segment styles */
+.segment-label {
+    font-size: 0.8em !important;
+    font-weight: 500;
+}
+
+ion-segment-button {
+    --padding-top: 8px;
+    --padding-bottom: 8px;
+    min-height: 40px;
+}
+
 /* Add margin to content below header */
 ion-content {
   --padding-top: 16px;

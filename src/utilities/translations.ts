@@ -14,6 +14,9 @@ export interface Translations {
     map: string;
     information: string;
     settingsTitle: string;
+    myFriends: string;
+    requests: string;
+    nearby: string;
   };
   map: {
     trackingOn: string;
@@ -122,7 +125,10 @@ const translations: Record<Language, Translations> = {
       connections: 'Connections',
       map: 'Map',
       information: 'Information',
-      settingsTitle: 'Settings'
+      settingsTitle: 'Settings',
+      myFriends: 'Friends',
+      requests: 'Requests',
+      nearby: 'Nearby'
     },
     map: {
       trackingOn: 'Tracking On',
@@ -229,7 +235,10 @@ const translations: Record<Language, Translations> = {
       connections: 'Əlaqələr',
       map: 'Xəritə',
       information: 'Məlumat',
-      settingsTitle: 'Parametrlər'
+      settingsTitle: 'Parametrlər',
+      myFriends: 'Dostlar',
+      requests: 'Sorğular',
+      nearby: 'Yaxınlıqda'
     },
     map: {
       trackingOn: 'İzlənmə Aktivdir',
@@ -336,7 +345,10 @@ const translations: Record<Language, Translations> = {
       connections: 'Связи',
       map: 'Карта',
       information: 'Информация',
-      settingsTitle: 'Настройки'
+      settingsTitle: 'Настройки',
+      myFriends: 'Друзья',
+      requests: 'Запросы',
+      nearby: 'Рядом'
     },
     map: {
       trackingOn: 'Отслеживание Включено',

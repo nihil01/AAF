@@ -4,10 +4,8 @@ import {
     IonToggle,
     IonBackButton,
     IonSpinner,
-    IonLabel,
-    IonButton
-} from "@ionic/react";
-import { GoogleMap, type Marker } from "@capacitor/google-maps";
+    IonLabel} from "@ionic/react";
+import { GoogleMap } from "@capacitor/google-maps";
 import React, { useEffect, useRef, useState } from "react";
 import { registerPlugin } from "@capacitor/core";
 import type { BackgroundGeolocationPlugin } from "@capacitor-community/background-geolocation";
@@ -15,6 +13,7 @@ import {destroy, initialize, sendData, setMessageCallback} from "../net/AppState
 import {Geolocation} from "@capacitor/geolocation";
 import { useTheme } from "../context/ThemeContext";
 import { useLanguage } from '../context/LanguageContext';
+ import { darkMapStyle } from '../theme/mapStyles';
 
 const BackgroundGeolocation: BackgroundGeolocationPlugin = registerPlugin("BackgroundGeolocation");
 
@@ -23,19 +22,39 @@ interface GoogleMapPageProps {
     onMapClick: (clicked: boolean) => void;
 }
 
+interface MarkerData {
+    id: string;
+    marker: string;
+}
+
+interface CameraPosition {
+    center: {
+        lat: number;
+        lng: number;
+    };
+    zoom: number;
+}
+
+interface CameraIdleData {
+    latitude: number;
+    longitude: number;
+    zoom: number;
+}
+
 export const GoogleMapPage: React.FC<GoogleMapPageProps> = ({ mapClicked, onMapClick }) => {
-    const { toggleTheme } = useTheme();
+    const { toggleTheme, isDark } = useTheme();
     const { translations } = useLanguage();
-    const mapRef = useRef<HTMLElement | null>(null);
+    const mapRef = useRef<HTMLDivElement>(null);
     const mapInstance = useRef<GoogleMap | null>(null);
+    const currentCameraPosition = useRef<CameraPosition | null>(null);
 
     const [isTracking, setIsTracking] = useState(false);
     const [isMapLoading, setIsMapLoading] = useState(true);
     const isConnectionInitialized = useRef(false);
 
     const watcherId = useRef<string>("");
-    const userMapMarkersRef = useRef<Record<string, Marker>>({});
-    const markerRef = useRef<Marker | null>(null);
+    const userMapMarkersRef = useRef<Record<string, MarkerData>>({});
+    const markerRef = useRef<MarkerData | null>(null);
 
     const handleLocationUpdate = async (
         latitude: number,
@@ -44,7 +63,7 @@ export const GoogleMapPage: React.FC<GoogleMapPageProps> = ({ mapClicked, onMapC
     ) => {
         console.log("Updating marker for user:", user);
 
-        const markerData: Marker = {
+        const markerData = {
             coordinate: {
                 lat: latitude,
                 lng: longitude,
@@ -56,12 +75,15 @@ export const GoogleMapPage: React.FC<GoogleMapPageProps> = ({ mapClicked, onMapC
 
         const existingMarker = userMapMarkersRef.current[user];
         if (existingMarker) {
-            await mapInstance.current?.removeMarker(existingMarker);
+            await mapInstance.current?.removeMarker(existingMarker.marker);
         }
 
         const newMarker = await mapInstance.current?.addMarker(markerData);
         if (newMarker) {
-            userMapMarkersRef.current[user] = newMarker;
+            userMapMarkersRef.current[user] = {
+                id: user,
+                marker: newMarker
+            };
         }
     };
 
@@ -136,23 +158,40 @@ export const GoogleMapPage: React.FC<GoogleMapPageProps> = ({ mapClicked, onMapC
                         zoom: 15,
                     };
 
+                    currentCameraPosition.current = cameraConfig;
+
                     if (mapRef.current) {
-                        mapInstance.current = await GoogleMap.create({
+                        const map = await GoogleMap.create({
                             id: "my-map",
                             element: mapRef.current,
                             apiKey: "XXX",
-                            config: cameraConfig,
+                            config: {
+                                ...cameraConfig,
+                                styles: isDark ? darkMapStyle : null
+                            },
                         });
 
-                        await mapInstance.current.setCamera(cameraConfig);
+                        mapInstance.current = map;
+                        await map.setCamera(cameraConfig);
                         setIsMapLoading(false);
 
-                        await mapInstance.current.setOnMapClickListener(async (data) => {
+                        // Store camera position when it changes
+                        await map.setOnCameraIdleListener((data: CameraIdleData) => {
+                            currentCameraPosition.current = {
+                                center: {
+                                    lat: data.latitude,
+                                    lng: data.longitude
+                                },
+                                zoom: data.zoom
+                            };
+                        });
+
+                        await map.setOnMapClickListener(async (data) => {
                             if (markerRef.current) {
-                                await mapInstance.current?.removeMarker(markerRef.current);
+                                await map.removeMarker(markerRef.current.marker);
                             }
 
-                            const marker = await mapInstance.current?.addMarker({
+                            const marker = await map.addMarker({
                                 coordinate: {
                                     lat: data.latitude,
                                     lng: data.longitude
@@ -162,13 +201,16 @@ export const GoogleMapPage: React.FC<GoogleMapPageProps> = ({ mapClicked, onMapC
                             });
 
                             if (marker) {
-                                markerRef.current = marker;
+                                markerRef.current = {
+                                    id: 'clicked',
+                                    marker: marker
+                                };
                             }
 
                             console.log("Cords clicked:", data.latitude, data.longitude);
                         });
 
-                        await mapInstance.current.setOnInfoWindowClickListener(data => {
+                        await map.setOnInfoWindowClickListener(data => {
                             if (data.title !== translations.map.cordsClicked) {
                                 sendData("disconnect", [0.0, 0.0]);
                                 destroy();
@@ -194,12 +236,77 @@ export const GoogleMapPage: React.FC<GoogleMapPageProps> = ({ mapClicked, onMapC
                 BackgroundGeolocation.removeWatcher({ id: watcherId.current });
             }
         };
-    }, [translations]);
+    }, [translations, isDark]);
 
     useEffect(() => {
         toggleTheme(true);
         return () => toggleTheme(false);
     }, [toggleTheme]);
+
+    useEffect(() => {
+        const updateMapStyle = async () => {
+            if (mapInstance.current && mapRef.current && currentCameraPosition.current) {
+                const currentMap = mapInstance.current;
+                await currentMap.destroy();
+                
+                const newMap = await GoogleMap.create({
+                    id: "my-map",
+                    element: mapRef.current,
+                    apiKey: "XXX",
+                    config: {
+                        center: currentCameraPosition.current.center,
+                        zoom: currentCameraPosition.current.zoom,
+                        styles: isDark ? darkMapStyle : null
+                    },
+                });
+
+                mapInstance.current = newMap;
+
+                // Restore event listeners
+                await newMap.setOnMapClickListener(async (data) => {
+                    if (markerRef.current) {
+                        await newMap.removeMarker(markerRef.current.marker);
+                    }
+
+                    const marker = await newMap.addMarker({
+                        coordinate: {
+                            lat: data.latitude,
+                            lng: data.longitude
+                        },
+                        title: translations.map.cordsClicked,
+                        snippet: `${data.latitude.toFixed(2)} | ${data.longitude.toFixed(2)}`
+                    });
+
+                    if (marker) {
+                        markerRef.current = {
+                            id: 'clicked',
+                            marker: marker
+                        };
+                    }
+                });
+
+                await newMap.setOnCameraIdleListener((data: CameraIdleData) => {
+                    currentCameraPosition.current = {
+                        center: {
+                            lat: data.latitude,
+                            lng: data.longitude
+                        },
+                        zoom: data.zoom
+                    };
+                });
+
+                await newMap.setOnInfoWindowClickListener(data => {
+                    if (data.title !== translations.map.cordsClicked) {
+                        sendData("disconnect", [0.0, 0.0]);
+                        destroy();
+                        location.href = `/profile/${data.title}`;
+                    }
+                });
+            }
+        };
+
+        updateMapStyle();
+    }, [isDark, translations]);
 
     return (
         <IonPage>
@@ -262,7 +369,7 @@ export const GoogleMapPage: React.FC<GoogleMapPageProps> = ({ mapClicked, onMapC
                     </div>
                 )}
 
-                <capacitor-google-map
+                <div
                     ref={mapRef}
                     style={{
                         display: "block",

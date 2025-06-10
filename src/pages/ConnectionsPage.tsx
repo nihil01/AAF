@@ -1,3 +1,5 @@
+import { useLanguage } from '../context/LanguageContext';
+
 import {
     IonContent,
     IonLabel,
@@ -6,24 +8,27 @@ import {
     IonSegmentButton,
     IonSkeletonText
 } from "@ionic/react";
-
-import {FriendsPage} from "./FriendsPage.tsx";
-import {RequestsPage} from "./RequestsPage.tsx";
-import {NearbyPage} from "./NearbyPage.tsx";
-import {useState, useEffect} from "react";
-import {HttpClient} from "../net/HttpClient.ts";
-import type {FriendsStruct} from "../net/FriendsStruct.ts";
+import { useState, useEffect } from "react";
+import { HttpClient } from "../net/HttpClient.ts";
+import type { FriendsStruct } from "../net/FriendsStruct.ts";
+import { FriendsPage } from "./FriendsPage.tsx";
+import { RequestsPage } from "./RequestsPage.tsx";
+import { NearbyPage } from "./NearbyPage.tsx";
 
 export const ConnectionsPage = () => {
-    const [activeSegment, setActiveSegment] = useState("friends");
+    const { translations } = useLanguage();
+    const [activeSegment, setActiveSegment] = useState<string>("friends");
     const [isLoading, setIsLoading] = useState(true);
-    const [friends, setFriends] = useState({});
+    const [friendsData, setFriendsData] = useState<FriendsStruct>({
+        friends: [],
+        friendsAwaiting: []
+    });
 
     useEffect(() => {
         const fetchData = async () => {
             try {
                 const response: FriendsStruct = await new HttpClient().getFriends();
-                setFriends(response);
+                setFriendsData(response);
             } catch (error) {
                 console.error('Error fetching data:', error);
             } finally {
@@ -49,28 +54,28 @@ export const ConnectionsPage = () => {
 
         switch (activeSegment) {
             case "friends":
-                return <FriendsPage friends={friends}/>;
+                return <FriendsPage friends={friendsData} />;
             case "requests":
-                return <RequestsPage friends={friends}/>;
+                return <RequestsPage friends={friendsData} />;
             case "nearby":
-                return <NearbyPage/>;
+                return <NearbyPage />;
             default:
-                return <FriendsPage friends={friends}/>;
+                return <FriendsPage friends={friendsData} />;
         }
     };
 
     return (
         <IonPage>
             <IonContent className="ion-padding nontransparent-content">
-                <IonSegment value={activeSegment} onIonChange={e => setActiveSegment(e.detail.value!)}>
-                    <IonSegmentButton value="friends">
-                        <IonLabel>My Friends</IonLabel>
+                <IonSegment value={activeSegment} onIonChange={e => setActiveSegment(e.detail.value as string)}>
+                        <IonSegmentButton value="friends">
+                            <IonLabel className="segment-label">{translations.common.myFriends}</IonLabel>
                     </IonSegmentButton>
                     <IonSegmentButton value="requests">
-                        <IonLabel>Requests</IonLabel>
+                        <IonLabel className="segment-label">{translations.common.requests}</IonLabel>
                     </IonSegmentButton>
                     <IonSegmentButton value="nearby">
-                        <IonLabel>Nearby</IonLabel>
+                        <IonLabel className="segment-label">{translations.common.nearby}</IonLabel>
                     </IonSegmentButton>
                 </IonSegment>
 

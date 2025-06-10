@@ -1,12 +1,14 @@
-import { IonButton, IonButtons, IonHeader, IonToolbar, IonPage, IonTitle, IonContent, IonList, IonItem, IonLabel, IonToggle, IonSelect, IonSelectOption, IonNote, IonIcon } from "@ionic/react"
+import { IonButton, IonButtons, IonHeader, IonToolbar, IonPage, IonTitle, IonContent, IonList, IonItem, IonLabel, IonToggle, IonSelect, IonSelectOption, IonNote, IonIcon, IonItemDivider } from "@ionic/react"
 import { useEffect, useState } from "react";
 import { PushNotifications } from "@capacitor/push-notifications";
 import { moon, sunny, notificationsCircleOutline, languageOutline, logOut, mail, arrowBack } from "ionicons/icons";
 import { useTheme } from "../context/ThemeContext";
 import { useLanguage } from '../context/LanguageContext';
 import type { Language } from '../utilities/translations';
-import { SharedPreferences } from "../utilities/SharedPreferences";
 import { HttpClient } from "../net/HttpClient";
+import { Preferences } from '@capacitor/preferences';
+
+const NOTIFICATION_PREF_KEY = 'notifications_disabled';
 
 export const SettingsComponent = ({ setComponent }: { setComponent: (value: string | null) => void }) => {
   const { isDark, toggleTheme } = useTheme();
@@ -18,21 +20,44 @@ export const SettingsComponent = ({ setComponent }: { setComponent: (value: stri
     checkNotificationPermission();
   }, []);
 
+
   const handleApplicationTheme = () => {
     toggleTheme();
   };
 
   const checkNotificationPermission = async () => {
+    // First check if notifications are disabled in preferences
+    const { value: disabled } = await Preferences.get({ key: NOTIFICATION_PREF_KEY });
+    if (disabled === 'true') {
+      setNotifications(false);
+      return;
+    }
+
+    // If not disabled in preferences, check system permission
     const permissionStatus = await PushNotifications.checkPermissions();
     setNotifications(permissionStatus.receive === 'granted');
   };
 
   const handleNotifications = async (state: boolean) => {
     if (state) {
+      // Check if notifications were previously disabled
+      const { value: disabled } = await Preferences.get({ key: NOTIFICATION_PREF_KEY });
+      if (disabled === 'true') {
+        // If notifications were previously disabled, don't request permissions
+        setNotifications(false);
+        return;
+      }
+
       const permissionStatus = await PushNotifications.requestPermissions();
       setNotifications(permissionStatus.receive === 'granted');
     } else {
+      // Disable notifications
       await PushNotifications.unregister();
+      await PushNotifications.deleteChannel({
+        id: 'default'
+      });
+      // Store the disabled state in preferences
+      await Preferences.set({ key: NOTIFICATION_PREF_KEY, value: 'true' });
       setNotifications(false);
     }
   };
@@ -80,6 +105,10 @@ export const SettingsComponent = ({ setComponent }: { setComponent: (value: stri
             <IonToggle slot="end" checked={notifications} onIonChange={e => handleNotifications(e.detail.checked)} />
           </IonItem>
 
+          <IonItemDivider style={{ marginTop: '16px', marginBottom: '8px' }}>
+            <IonLabel>Account Settings</IonLabel>
+          </IonItemDivider>
+
           <IonItem>
             <IonIcon icon={languageOutline}/>
             <IonLabel>{translations.settings.language}</IonLabel>
@@ -94,6 +123,10 @@ export const SettingsComponent = ({ setComponent }: { setComponent: (value: stri
             <IonIcon slot="end" icon={mail}/>
             <IonLabel>{translations.settings.contactAdmin}</IonLabel>
           </IonItem>
+
+          <IonItemDivider style={{ marginTop: '16px', marginBottom: '8px' }}>
+            <IonLabel>Account Actions</IonLabel>
+          </IonItemDivider>
 
           <IonItem button onClick={handleLogout}>
             <IonLabel color="danger">{translations.settings.logout}</IonLabel>
