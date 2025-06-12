@@ -2,11 +2,11 @@ import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Camera, CameraResultType } from '@capacitor/camera';
-import CarModifications from './CarModifications';
+import CarModifications from './CarModifications.ts';
 import * as z from 'zod';
-import { useLanguage } from '../context/LanguageContext';
-import { HttpClient } from '../net/HttpClient';
-import type { VehicleWithMedia } from '../net/HttpClient';
+import { useLanguage } from '../../context/LanguageContext.tsx';
+import { HttpClient } from '../../net/HttpClient.ts';
+import type { VehicleWithMedia } from '../../net/HttpClient';
 import { useIonToast } from '@ionic/react';
 
 import {
@@ -38,6 +38,7 @@ import {
 } from '@ionic/react';
 import { add, settings, camera, image, arrowBack, create, trash } from 'ionicons/icons';
 import './CarComponent.css';
+import { CustomLoaderComponent } from '../loader/CustomLoaderComponent';
 
 const formStyles = {
   item: {
@@ -339,10 +340,7 @@ export function CarComponent({ setComponent }: { setComponent: (value: string | 
       </IonHeader>
       <IonContent fullscreen>
         {isLoading ? (
-          <div className="loading-container">
-            <IonSpinner name="crescent" />
-            <p>{translations.carComponent.loading || 'Loading...'}</p>
-          </div>
+          <CustomLoaderComponent />
         ) : (
           <>
             {/* Add Car Button */}
@@ -550,7 +548,7 @@ export function CarComponent({ setComponent }: { setComponent: (value: string | 
                       >
                         {isSubmitting ? (
                           <>
-                            <IonSpinner name="crescent" style={{ marginRight: '8px' }} />
+                            <CustomLoaderComponent />
                             {translations.carComponent.submitting}
                           </>
                         ) : (

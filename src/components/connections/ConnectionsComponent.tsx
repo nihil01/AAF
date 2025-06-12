@@ -1,4 +1,4 @@
-import { useLanguage } from '../context/LanguageContext';
+import { useLanguage } from '../../context/LanguageContext';
 
 import {
     IonContent,
@@ -9,11 +9,11 @@ import {
     IonSkeletonText
 } from "@ionic/react";
 import { useState, useEffect } from "react";
-import { HttpClient } from "../net/HttpClient.ts";
-import type { FriendsStruct } from "../net/FriendsStruct.ts";
-import { FriendsPage } from "./FriendsPage.tsx";
-import { RequestsPage } from "./RequestsPage.tsx";
-import { NearbyPage } from "./NearbyPage.tsx";
+import { HttpClient } from "../../net/HttpClient";
+import type { FriendsStruct } from "../../net/FriendsStruct";
+import { FriendsPage } from "./FriendsComponent";
+import { RequestsPage } from "./RequestsPageComponent";
+import { NearbyPage } from "./NearbyPageComponent";
 
 export const ConnectionsPage = () => {
     const { translations } = useLanguage();

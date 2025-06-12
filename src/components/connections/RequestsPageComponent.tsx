@@ -1,7 +1,7 @@
-import type {AvailableUser, FriendsStruct} from "../net/FriendsStruct.ts";
+import type {AvailableUser, FriendsStruct} from "../../net/FriendsStruct.ts";
 import {IonList, IonItem, IonLabel, IonButton, useIonAlert} from "@ionic/react";
 import {useState} from "react";
-import {HttpClient} from "../net/HttpClient.ts";
+import {HttpClient} from "../../net/HttpClient.ts";
 
 export const RequestsPage = ({friends}: {friends: FriendsStruct}) => {
     const httpClient = new HttpClient();

@@ -1,6 +1,6 @@
 import type {AuthUser} from "./AuthUser.ts";
 import type {UserResponse} from "./UserResponse.ts";
-import {SharedPreferences} from "../utilities/SharedPreferences.ts";
+import {SharedPreferences} from "../utilities/SharedPreferences";
 import type {AvailableUser, FriendsStruct} from "./FriendsStruct.ts";
 import type {UserCords} from "./AppStateConnection.ts";
 

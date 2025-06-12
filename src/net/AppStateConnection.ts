@@ -1,5 +1,5 @@
 import {App} from "@capacitor/app";
-import {SharedPreferences} from "../utilities/SharedPreferences.ts";
+import {SharedPreferences} from "../utilities/SharedPreferences";
 import { HttpClient } from "./HttpClient.ts";
 import type {UserResponse} from "./UserResponse.ts";
 

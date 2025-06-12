@@ -15,13 +15,13 @@ import {
     IonIcon,
     IonText,
     IonAlert,
-    IonLoading,
     useIonAlert
 } from '@ionic/react';
 
 import { logoApple, logoGoogle } from "ionicons/icons";
-import { HttpClient } from "../net/HttpClient.ts";
-import { loginWithGoogle } from "../firebase/Oauth2.ts";
+import { HttpClient } from "../../net/HttpClient";
+import { loginWithGoogle } from "../../firebase/Oauth2";
+import { CustomLoaderComponent } from '../loader/CustomLoaderComponent';
 
 const Auth: React.FC = () => {
     const [email, setEmail] = useState("");
@@ -335,11 +335,7 @@ const Auth: React.FC = () => {
                     ]}
                 />
 
-                <IonLoading
-                    isOpen={loading}
-                    animated={true}
-                    message={'Loading... Wait please'}
-                />
+                {loading && <CustomLoaderComponent />}
 
                 {/* Reset Password OTP Alert */}
                 <IonAlert

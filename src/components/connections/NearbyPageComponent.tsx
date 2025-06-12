@@ -1,8 +1,9 @@
-import {HttpClient} from "../net/HttpClient.ts";
+import {HttpClient} from "../../net/HttpClient.ts";
 import {useState} from "react";
 import {Geolocation} from "@capacitor/geolocation";
 import {useIonAlert} from "@ionic/react";
-import {IonList, IonItem, IonAvatar, IonLabel, IonButton, IonProgressBar} from "@ionic/react";
+import {IonList, IonItem, IonAvatar, IonLabel, IonButton} from "@ionic/react";
+import { CustomLoaderComponent } from '../loader/CustomLoaderComponent';
 
 export const NearbyPage = () => {
 
@@ -75,7 +76,7 @@ export const NearbyPage = () => {
 
     return (
         <div>
-            {loading && <IonProgressBar type="indeterminate"></IonProgressBar>}
+            {loading && <CustomLoaderComponent />}
             <IonButton expand="block" onClick={fetchNearbyUsers}>
                 Rescan
             </IonButton>

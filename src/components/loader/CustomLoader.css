@@ -1,0 +1,44 @@
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.custom-loader-card {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 300px;
+    max-width: 90vw;
+    margin: 0;
+    padding: 16px;
+    text-align: center;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    border-radius: 12px;
+    background: var(--ion-card-background, #fff);
+    z-index: 1000;
+}
+
+.custom-loader-card ion-card-header {
+    padding: 12px;
+    font-size: 1.1em;
+    color: var(--ion-color-medium);
+}
+
+.custom-loader-card ion-card-content {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 16px;
+}
+
+.custom-loader-svg {
+    width: 80px;
+    height: 80px;
+    animation: spin 1.5s linear infinite;
+    margin: 0 auto;
+}

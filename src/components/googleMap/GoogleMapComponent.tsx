@@ -9,11 +9,12 @@ import { GoogleMap } from "@capacitor/google-maps";
 import React, { useEffect, useRef, useState } from "react";
 import { registerPlugin } from "@capacitor/core";
 import type { BackgroundGeolocationPlugin } from "@capacitor-community/background-geolocation";
-import {destroy, initialize, sendData, setMessageCallback} from "../net/AppStateConnection.ts";
+import {destroy, initialize, sendData, setMessageCallback} from "../../net/AppStateConnection";
 import {Geolocation} from "@capacitor/geolocation";
-import { useTheme } from "../context/ThemeContext";
-import { useLanguage } from '../context/LanguageContext';
- import { darkMapStyle } from '../theme/mapStyles';
+import { useTheme } from "../../context/ThemeContext";
+import { useLanguage } from '../../context/LanguageContext';
+import { darkMapStyle } from '../../theme/mapStyles';
+import { CustomLoaderComponent } from '../loader/CustomLoaderComponent';
 
 const BackgroundGeolocation: BackgroundGeolocationPlugin = registerPlugin("BackgroundGeolocation");
 
@@ -354,18 +355,8 @@ export const GoogleMapPage: React.FC<GoogleMapPageProps> = ({ mapClicked, onMapC
                 </div>
 
                 {isMapLoading && (
-                    <div style={{
-                        position: "absolute",
-                        top: "50%",
-                        left: "50%",
-                        transform: "translate(-50%, -50%)",
-                        zIndex: 1000,
-                        background: "rgba(255, 255, 255, 0.8)",
-                        padding: "20px",
-                        borderRadius: "12px"
-                    }}>
-                        <IonSpinner name="crescent" />
-                        <IonLabel>{translations.common.loading}</IonLabel>
+                    <div className="map-loading-overlay">
+                        <CustomLoaderComponent />
                     </div>
                 )}
 

@@ -1,5 +1,5 @@
 import { FirebaseAuthentication } from '@capacitor-firebase/authentication';
-import { HttpClient } from "../net/HttpClient.ts";
+import { HttpClient } from "../net/HttpClient";
 
 export const loginWithGoogle = async (onError?: (msg?: string) => void) => {
     try {

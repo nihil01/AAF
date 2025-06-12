@@ -1,5 +1,5 @@
 import { Preferences } from '@capacitor/preferences';
-import type {UserResponse} from "../net/UserResponse.ts";
+import type {UserResponse} from "../net/UserResponse";
 
 export class SharedPreferences {
 

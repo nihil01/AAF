@@ -12,16 +12,16 @@ import {Route, Redirect, Switch} from 'react-router-dom';
 import {home, person, map, compass} from 'ionicons/icons';
 import { SharedPreferences } from "./utilities/SharedPreferences.ts";
 import { useEffect, useState } from "react";
-import Auth from "./components/Auth.tsx";
-import {GoogleMapPage} from "./pages/GoogleMap.tsx";
-import {ConnectionsPage} from "./pages/ConnectionsPage.tsx";
-import {ProfilePage} from "./pages/Profile.tsx";
-import { useLanguage } from './context/LanguageContext';
+import Auth from "./components/auth/AuthComponent.tsx";
+import {GoogleMapPage} from "./components/googleMap/GoogleMapComponent.tsx";
+import {ConnectionsPage} from "./components/connections/ConnectionsComponent.tsx";
+import {ProfilePage} from "./components/profile/ProfileComponent.tsx";
+import { useLanguage } from './context/LanguageContext.tsx';
 import { SplashScreen } from '@capacitor/splash-screen';
 import { App as CapApp } from '@capacitor/app';
-import Onboarding from './components/Onboarding';
-import { OnboardingPreferences } from './utilities/OnboardingPreferences';
-import './theme/onboarding.css';
+import Onboarding from './components/onboarding/OnboardingComponent.tsx';
+import { OnboardingPreferences } from './utilities/OnboardingPreferences.ts';
+import './components/onboarding/onboarding.css';
 
 import {
     PushNotifications, type PushNotificationSchema, type Token,
@@ -29,9 +29,9 @@ import {
 import {HttpClient} from "./net/HttpClient.ts";
 import {Device} from "@capacitor/device";
 import type {CustomNotificationWrapper} from "./notification/CustomNotificationWrapper.ts";
-import {HomePage} from "./pages/HomePage.tsx";
-import { ThemeProvider } from './context/ThemeContext';
-import { LanguageProvider } from './context/LanguageContext';
+import {HomePage} from "./components/home/HomePageComponent.tsx";
+import { ThemeProvider } from './context/ThemeContext.tsx';
+import { LanguageProvider } from './context/LanguageContext.tsx';
 
 const AppContent: React.FC = () => {
     const [tokenPresented, setTokenPresented] = useState(true);
@@ -87,7 +87,8 @@ const AppContent: React.FC = () => {
     const initPushNotifications = async () => {
         const token = await SharedPreferences.getToken('refresh');
         if (!token) {
-            setTokenPresented(false);
+            //TODO: Remove this; DEBUG
+            setTokenPresented(true);
             return;
         }
 
@@ -218,5 +219,3 @@ const App: React.FC = () => {
 };
 
 export default App;
-
-

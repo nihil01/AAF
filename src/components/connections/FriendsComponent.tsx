@@ -8,8 +8,8 @@ import {
     useIonAlert
 } from '@ionic/react';
 import { useState, useEffect, useRef } from 'react';
-import { HttpClient } from "../net/HttpClient.ts";
-import type { AvailableUser, FriendsStruct } from "../net/FriendsStruct.ts";
+import { HttpClient } from "../../net/HttpClient.ts";
+import type { AvailableUser, FriendsStruct } from "../../net/FriendsStruct.ts";
 
 export const FriendsPage = ({ friends }: { friends: FriendsStruct }) => {
     const [searchText, setSearchText] = useState('');

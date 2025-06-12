@@ -1,10 +1,10 @@
 import { IonContent, IonPage } from "@ionic/react";
 import { carOutline, settingsOutline } from 'ionicons/icons';
-import GridCard from "../components/GridCard";
-import { CarComponent } from "../components/CarComponent";
+import GridCard from "./GridCard";
+import { CarComponent } from "../vehicles/CarComponent";
 import { useState } from "react";
-import { SettingsComponent } from "../components/SettingsComponent";
-import { useLanguage } from "../context/LanguageContext";
+import { SettingsComponent } from "../settings/SettingsComponent.tsx";
+import { useLanguage } from "../../context/LanguageContext.tsx";
 
 export const HomePage = () => {
     const [activeComponent, setActiveComponent] = useState<string | null>(null);

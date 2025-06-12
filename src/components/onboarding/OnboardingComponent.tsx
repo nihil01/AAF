@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import '../theme/onboarding.css';
+import './onboarding.css';
 import {
     IonContent,
     IonPage,
@@ -7,8 +7,8 @@ import {
     IonText,
     IonIcon
 } from '@ionic/react';
-import { useLanguage } from '../context/LanguageContext';
-import { OnboardingPreferences } from '../utilities/OnboardingPreferences';
+import { useLanguage } from '../../context/LanguageContext.tsx';
+import { OnboardingPreferences } from '../../utilities/OnboardingPreferences.ts';
 import { 
     carOutline, 
     mapOutline, 
@@ -17,14 +17,6 @@ import {
 } from 'ionicons/icons';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Pagination } from 'swiper/modules';
-// import 'swiper/css';
-// import 'swiper/css/pagination';
-// import 'swiper/css/navigation';
-
-// const slideOpts = {
-//     initialSlide: 0,
-//     speed: 400
-// };
 
 const Onboarding: React.FC = () => {
     const [currentSlide, setCurrentSlide] = useState(0);

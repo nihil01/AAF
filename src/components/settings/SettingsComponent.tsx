@@ -2,10 +2,10 @@ import { IonButton, IonButtons, IonHeader, IonToolbar, IonPage, IonTitle, IonCon
 import { useEffect, useState } from "react";
 import { PushNotifications } from "@capacitor/push-notifications";
 import { moon, sunny, notificationsCircleOutline, languageOutline, logOut, mail, arrowBack } from "ionicons/icons";
-import { useTheme } from "../context/ThemeContext";
-import { useLanguage } from '../context/LanguageContext';
-import type { Language } from '../utilities/translations';
-import { HttpClient } from "../net/HttpClient";
+import { useTheme } from "../../context/ThemeContext";
+import { useLanguage } from '../../context/LanguageContext';
+import type { Language } from '../../utilities/translations';
+import { HttpClient } from "../../net/HttpClient";
 import { Preferences } from '@capacitor/preferences';
 
 const NOTIFICATION_PREF_KEY = 'notifications_disabled';

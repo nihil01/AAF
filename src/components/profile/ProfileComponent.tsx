@@ -1,5 +1,5 @@
 import React from "react";
-import '../ProfilePage.css';
+import './ProfilePage.css';
 import {
     IonAvatar,
     IonBadge,
@@ -18,8 +18,9 @@ import {
 } from '@ionic/react';
 import { useParams } from 'react-router-dom';
 import { star, location, add } from 'ionicons/icons';
-import { VehicleCard } from "../components/VehicleCard.tsx";
-import { TripHistoryCard } from "../components/trip-history-card.tsx";
+import { VehicleCard } from "./VehicleCard.tsx";
+import { TripHistoryCard } from "./trip-history-card.tsx";
+import { CustomLoaderComponent } from '../loader/CustomLoaderComponent';
 
 export const ProfilePage: React.FC = () => {
     // Get userId from URL params
@@ -69,7 +70,7 @@ export const ProfilePage: React.FC = () => {
                                 </div>
                                 {isOwnProfile && (
                                     <IonButton size="small" fill="outline" onClick={handleEditProfile}>
-                                        {isLoading ? <IonSpinner name="dots" /> : 'Edit'}
+                                        {isLoading ? <CustomLoaderComponent /> : 'Edit'}
                                     </IonButton>
                                 )}
                             </div>
