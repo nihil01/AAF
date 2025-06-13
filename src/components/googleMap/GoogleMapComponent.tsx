@@ -3,7 +3,6 @@ import {
     IonContent,
     IonToggle,
     IonBackButton,
-    IonSpinner,
     IonLabel} from "@ionic/react";
 import { GoogleMap } from "@capacitor/google-maps";
 import React, { useEffect, useRef, useState } from "react";
@@ -99,7 +98,7 @@ export const GoogleMapPage: React.FC<GoogleMapPageProps> = ({ mapClicked, onMapC
                     backgroundTitle: translations.map.trackingOn,
                     requestPermissions: true,
                     stale: false,
-                    distanceFilter: 50,
+                    distanceFilter: 10
                 },
                 (location, error) => {
                     if (error) {

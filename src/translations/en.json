@@ -1,0 +1,12 @@
+{
+    "profile": {
+        "memberSince": "Member Since",
+        "vehicles": "Vehicles",
+        "engineSpecs": "Engine Specifications",
+        "horsePower": "Horsepower",
+        "torque": "Torque",
+        "zeroToHundred": "0-100 km/h",
+        "story": "Story",
+        "modifications": "Modifications"
+    }
+} 

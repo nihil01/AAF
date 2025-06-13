@@ -1,0 +1,12 @@
+{
+    "profile": {
+        "memberSince": "Üzvlük Tarixi",
+        "vehicles": "Avtomobillər",
+        "engineSpecs": "Mühərrik Spesifikasiyaları",
+        "horsePower": "At Gücü",
+        "torque": "Tork",
+        "zeroToHundred": "0-100 km/s",
+        "story": "Hekayə",
+        "modifications": "Modifikasiyalar"
+    }
+} 

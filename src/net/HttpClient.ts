@@ -3,6 +3,7 @@ import type {UserResponse} from "./UserResponse.ts";
 import {SharedPreferences} from "../utilities/SharedPreferences";
 import type {AvailableUser, FriendsStruct} from "./FriendsStruct.ts";
 import type {UserCords} from "./AppStateConnection.ts";
+import type { ProfileData } from '../types/profile';
 
 export interface Vehicle {
     uuid: string;
@@ -25,11 +26,11 @@ export interface VehicleWithMedia extends Vehicle {
 
 export class HttpClient {
 
-    private AUTH_BASE_URL = 'http://10.20.30.3:8080/api/v1/auth';
-    private FRIENDS_BASE_URL = 'http://10.20.30.3:8080/api/v1/friends';
-    private FIREBASE_BASE_URL = 'http://10.20.30.3:8080/api/v1/firebase';
-    private SILENT_PUSH_BASE_URL = 'http://10.20.30.3:8080/api/v1/silent';
-    private CARS_BASE_URL = 'http://10.20.30.3:8080/api/v1/vehicles';
+    private AUTH_BASE_URL = 'http://10.20.30.2:8080/api/v1/auth';
+    private FRIENDS_BASE_URL = 'http://10.20.30.2:8080/api/v1/friends';
+    private FIREBASE_BASE_URL = 'http://10.20.30.2:8080/api/v1/firebase';
+    private SILENT_PUSH_BASE_URL = 'http://10.20.30.2:8080/api/v1/silent';
+    private CARS_BASE_URL = 'http://10.20.30.2:8080/api/v1/vehicles';
 
 
  //AUTHENTICATION
@@ -403,5 +404,34 @@ export class HttpClient {
         });
 
         await SharedPreferences.clearAll();
+    }
+
+    async getProfileData(username: string): Promise<ProfileData> {
+        try {
+
+            const accessToken = await SharedPreferences.getToken('access');
+
+            const request = new Request(`${this.AUTH_BASE_URL}/profile/${username}`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${accessToken}`
+                }
+            });
+
+            const response = await this.handleResponse(await fetch(request), request);
+
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const data = await response.json();
+            return data as ProfileData;
+            
+        } catch (error) { 
+            console.error('Error fetching profile data:', error);
+            throw error;
+        }
     }
 }

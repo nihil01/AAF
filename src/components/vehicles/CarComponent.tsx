@@ -33,7 +33,6 @@ import {
   IonTitle,
   IonHeader,
   IonPage,
-  IonSpinner,
   IonBadge
 } from '@ionic/react';
 import { add, settings, camera, image, arrowBack, create, trash } from 'ionicons/icons';

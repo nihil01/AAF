@@ -111,7 +111,7 @@ export function setMessageCallback(callback: ( latitude: number, longitude: numb
 async function openConnectionOnActiveState(){
     if (!socket || socket.readyState === WebSocket.CLOSED) {
         console.log("WebSocket: Trying to connect ayo!")
-        socket = new WebSocket(`ws://10.20.30.3:8080/api/v1/socket`);
+        socket = new WebSocket(`ws://10.20.30.2:8080/api/v1/socket`);
 
         socket.onopen = () => {
             console.log('WebSocket connection opened');
@@ -128,7 +128,7 @@ async function openConnectionOnActiveState(){
         };
 
         socket.onerror = (error) => {
-            console.error('WebSocket error:', error);
+            console.error('WebSocket error:', JSON.stringify(error));
             socket = null;
         };
 

@@ -12,7 +12,6 @@ import {
     IonPage,
     IonSegment,
     IonSegmentButton,
-    IonSpinner,
     IonTitle,
     IonToolbar
 } from '@ionic/react';
