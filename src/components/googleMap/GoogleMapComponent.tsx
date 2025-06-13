@@ -14,6 +14,7 @@ import { useTheme } from "../../context/ThemeContext";
 import { useLanguage } from '../../context/LanguageContext';
 import { darkMapStyle } from '../../theme/mapStyles';
 import { CustomLoaderComponent } from '../loader/CustomLoaderComponent';
+import { useIonAlert } from "@ionic/react";
 
 const BackgroundGeolocation: BackgroundGeolocationPlugin = registerPlugin("BackgroundGeolocation");
 
@@ -41,6 +42,16 @@ interface CameraIdleData {
     zoom: number;
 }
 
+// Mock function to fetch user short info
+async function fetchUserShortInfo(username: string) {
+    // Replace with real API call
+    return {
+        cars: 2,
+        registered: '2021-05-10',
+        isFriend: false
+    };
+}
+
 export const GoogleMapPage: React.FC<GoogleMapPageProps> = ({ mapClicked, onMapClick }) => {
     const { toggleTheme, isDark } = useTheme();
     const { translations } = useLanguage();
@@ -55,6 +66,7 @@ export const GoogleMapPage: React.FC<GoogleMapPageProps> = ({ mapClicked, onMapC
     const watcherId = useRef<string>("");
     const userMapMarkersRef = useRef<Record<string, MarkerData>>({});
     const markerRef = useRef<MarkerData | null>(null);
+    const [presentAlert] = useIonAlert();
 
     const handleLocationUpdate = async (
         latitude: number,
@@ -210,11 +222,23 @@ export const GoogleMapPage: React.FC<GoogleMapPageProps> = ({ mapClicked, onMapC
                             console.log("Cords clicked:", data.latitude, data.longitude);
                         });
 
-                        await map.setOnInfoWindowClickListener(data => {
+                        await map.setOnInfoWindowClickListener(async data => {
                             if (data.title !== translations.map.cordsClicked) {
-                                sendData("disconnect", [0.0, 0.0]);
-                                destroy();
-                                location.href = `/profile/${data.title}`;
+                                // Fetch user info (mock for now)
+                                const userInfo = await fetchUserShortInfo(data.title);
+                                presentAlert({
+                                    header: `User: ${data.title}`,
+                                    message: `Cars: ${userInfo.cars}<br/>Registered: ${userInfo.registered}`,
+                                    buttons: [
+                                        {
+                                            text: userInfo.isFriend ? 'Remove from friends' : 'Add to friends',
+                                            handler: () => {
+                                                // Call backend to add/remove friend
+                                            }
+                                        },
+                                        { text: 'Close', role: 'cancel' }
+                                    ]
+                                });
                             }
                         });
                     }

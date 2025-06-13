@@ -1,19 +1,24 @@
 export interface Vehicle {
+    uuid: string;
+    id: number;
     make: string;
     model: string;
     year: number;
     engineSpecs: string;
     horsePower: number;
-    torque: number;
-    zeroToHundred: number;
+    torque: string;
+    zeroToHundred: string;
     story: string;
-    modifications: string; // JSON string of modifications array
-    createdAt: string;
-    photourls: (string | null)[];
+    modifications?: string;
 }
 
-export interface ProfileData {
+export interface VehicleWithMedia extends Vehicle {
+    created_at: string;
+    photo_urls: string[];
+}
+
+export interface ProfileData{
     username: string;
     registered: string;
-    vehicles: Vehicle[];
+    vehicles: VehicleWithMedia[];
 }

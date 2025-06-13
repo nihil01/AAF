@@ -6,7 +6,6 @@ import CarModifications from './CarModifications.ts';
 import * as z from 'zod';
 import { useLanguage } from '../../context/LanguageContext.tsx';
 import { HttpClient } from '../../net/HttpClient.ts';
-import type { VehicleWithMedia } from '../../net/HttpClient';
 import { useIonToast } from '@ionic/react';
 
 import {
@@ -38,6 +37,8 @@ import {
 import { add, settings, camera, image, arrowBack, create, trash } from 'ionicons/icons';
 import './CarComponent.css';
 import { CustomLoaderComponent } from '../loader/CustomLoaderComponent';
+import type { VehicleDetails } from '../../types/profile.ts';
+import { VehicleCard } from './VehicleCard.tsx';
 
 const formStyles = {
   item: {
@@ -85,11 +86,44 @@ const carFormSchema = z.object({
 
 type CarFormData = z.infer<typeof carFormSchema>;
 
-interface CarDetails extends Omit<VehicleWithMedia, 'id' | 'uuid'> {
-  id: string; // Using string for client-side IDs
-  modifications: string; // Adding back modifications as it's not in VehicleWithMedia
-  uuid: string;
-}
+// Mock data to simulate backend
+const MOCK_VEHICLES: VehicleDetails[] = [
+  {
+    id: '1',
+    uuid: '1',
+    make: 'Tesla',
+    model: 'Model S',
+    year: 2022,
+    engineSpecs: 'Dual Motor AWD',
+    horsePower: 670,
+    torque: '850 Nm',
+    zeroToHundred: '3.1s',
+    story: 'A premium electric sedan with great performance and range.',
+    photo_urls: [
+      'https://www.google.com/url?sa=i&url=https%3A%2F%2Fleasecar.uk%2Fspecial-offers%2F&psig=AOvVaw1TqtQwkdXMiz9PlmnU8Edi&ust=1749886192436000&source=images&cd=vfe&opi=89978449&ved=0CBEQjRxqFwoTCPjA05bw7Y0DFQAAAAAdAAAAABAE',
+      'https://upload.wikimedia.org/wikipedia/commons/thumb/a/a4/2019_Toyota_Corolla_Icon_Tech_VVT-i_Hybrid_1.8.jpg/960px-2019_Toyota_Corolla_Icon_Tech_VVT-i_Hybrid_1.8.jpg'
+    ],
+    modifications: JSON.stringify(['Performance Upgrade', 'Tinted Windows']),
+    created_at: '2023-01-01T12:00:00Z'
+  },
+  {
+    id: '2',
+    uuid: '2',
+    make: 'BMW',
+    model: 'M3',
+    year: 2020,
+    engineSpecs: '3.0L Twin-Turbo I6',
+    horsePower: 473,
+    torque: '550 Nm',
+    zeroToHundred: '4.1s',
+    story: 'A sporty sedan with a legacy of performance and driving pleasure.',
+    photo_urls: [
+      'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQcK8LuTRihbc5t5dlS6Lw6Q710u02oN80LJw&s'
+    ],
+    modifications: JSON.stringify(['Carbon Fiber Spoiler']),
+    created_at: '2022-06-15T09:30:00Z'
+  }
+];
 
 export function CarComponent({ setComponent }: { setComponent: (value: string | null) => void }) {
   const { translations } = useLanguage();
@@ -97,7 +131,7 @@ export function CarComponent({ setComponent }: { setComponent: (value: string | 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const httpClient = new HttpClient();
-  const [cars, setCars] = useState<CarDetails[]>([]);
+  const [cars, setCars] = useState<VehicleDetails[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [photos, setPhotos] = useState<string[]>([]);
   const [modifications, setModifications] = useState<string[]>([]);
@@ -112,22 +146,20 @@ export function CarComponent({ setComponent }: { setComponent: (value: string | 
     const fetchVehicleData = async () => {
       try {
         setIsLoading(true);
-        const vehicleData = await httpClient.getVehicleData();
-        // Transform the data to include modifications from the backend
-        const transformedData: CarDetails[] = vehicleData.map(vehicle => ({
-          ...vehicle,
-          id: vehicle.id.toString(),
-          modifications: vehicle.modifications || '' // Use backend modifications if available
-        }));
-        setCars(transformedData);
+        // Simulate backend delay
+        await new Promise(res => setTimeout(res, 500));
+        // Use mock data
+        setCars(MOCK_VEHICLES);
+        // If you want to use backend, comment above and uncomment below:
+        // const vehicleData = await httpClient.getVehicleData();
+        // const transformedData: VehicleDetails[] = vehicleData.map(vehicle => ({
+        //   ...vehicle,
+        //   id: vehicle.id.toString(),
+        //   modifications: vehicle.modifications || ''
+        // }));
+        // setCars(transformedData);
       } catch (error) {
         console.error('Error fetching vehicle data:', error);
-        // presentToast({
-        //   message: translations.carComponent.fetchError || 'Failed to fetch vehicle data',
-        //   duration: 2000,
-        //   position: 'bottom',
-        //   color: 'danger'
-        // });
       } finally {
         setIsLoading(false);
       }
@@ -202,7 +234,7 @@ export function CarComponent({ setComponent }: { setComponent: (value: string | 
       const response = await httpClient.submitVehicleData(formData);
 
       // Add to local state
-      const newCar: CarDetails = {
+      const newCar: VehicleDetails = {
         ...response,
         id: response.id.toString(), // Convert server ID to string
         modifications: JSON.stringify(modifications), // Add modifications from local state
@@ -307,7 +339,7 @@ export function CarComponent({ setComponent }: { setComponent: (value: string | 
   };
 
   // Add edit handler
-  const handleEdit = (car: CarDetails) => {
+  const handleEdit = (car: VehicleDetails) => {
     setShowForm(true);
     form.reset({
       make: car.make,
@@ -334,7 +366,7 @@ export function CarComponent({ setComponent }: { setComponent: (value: string | 
               <IonIcon slot="start" icon={arrowBack} />
             </IonButton>
           </IonButtons>
-          <IonTitle>{translations.carComponent.carDetails}</IonTitle>
+          <IonTitle>{translations.carComponent.carDetails || "Vehicle Details"}</IonTitle>
         </IonToolbar>
       </IonHeader>
       <IonContent fullscreen>
@@ -500,7 +532,7 @@ export function CarComponent({ setComponent }: { setComponent: (value: string | 
                           }
                           </IonList>
 
-                          <IonButton expand="block" onClick={() => showModificationDialog()}>
+                          <IonButton expand="block" disabled={isSubmitting} onClick={() => showModificationDialog()}>
                             <IonIcon slot="start" icon={add} />
                             {translations.carComponent.addModification}
                           </IonButton>
@@ -510,7 +542,7 @@ export function CarComponent({ setComponent }: { setComponent: (value: string | 
                       </IonRow>
 
                       {/* Photo Upload Button */}
-                      <IonButton expand="block" onClick={() => setShowPhotoModal(true)}>
+                      <IonButton disabled={isSubmitting} expand="block" onClick={() => setShowPhotoModal(true)}>
                         <IonIcon slot="start" icon={camera} />
                         {translations.carComponent.addPhotos}
                       </IonButton>
@@ -538,6 +570,13 @@ export function CarComponent({ setComponent }: { setComponent: (value: string | 
                       {/* Display added photos */}
                       {photos.length > 0 && (showSavesPictures())}
 
+
+                      {isSubmitting && (
+                          <>
+                            <CustomLoaderComponent />
+                          </>
+                      )}
+
                       <IonButton 
                         expand="block" 
                         type="submit" 
@@ -545,14 +584,7 @@ export function CarComponent({ setComponent }: { setComponent: (value: string | 
                         disabled={isSubmitting}
                         onClick={() => onSubmit(form.getValues())}
                       >
-                        {isSubmitting ? (
-                          <>
-                            <CustomLoaderComponent />
-                            {translations.carComponent.submitting}
-                          </>
-                        ) : (
-                          translations.carComponent.saveCar
-                        )}
+                          {translations.carComponent.saveCar}
                       </IonButton>
 
                     </IonGrid>
@@ -564,63 +596,7 @@ export function CarComponent({ setComponent }: { setComponent: (value: string | 
             {/* Display added cars */}
             <div className="cars-grid">
               {cars.map(car => (
-                <IonCard key={car.id} className="car-card">
-                  {car.photo_urls && car.photo_urls.length > 0 && (
-                    <div className="car-image-container">
-                      <img src={car.photo_urls[0]} alt={`${car.make} ${car.model}`} />
-                      <div className="year-chip">{car.year}</div>
-                    </div>
-                  )}
-                  <IonCardHeader>
-                    <IonCardTitle>{car.year} {car.make} {car.model}</IonCardTitle>
-                    <div className="car-actions">
-                      <IonButton fill="clear" onClick={() => handleEdit(car)}>
-                        <IonIcon icon={create} />
-                      </IonButton>
-                      <IonButton fill="clear" color="danger" onClick={() => handleDelete(car.uuid)}>
-                        <IonIcon icon={trash} />
-                      </IonButton>
-                    </div>
-                  </IonCardHeader>
-                  <IonCardContent>
-                    <div className="specs-grid">
-                      <div className="spec-item">
-                        <strong>{translations.carComponent.engine}:</strong>
-                        <span>{car.engineSpecs}</span>
-                      </div>
-                      <div className="spec-item">
-                        <strong>{translations.carComponent.horsePower}:</strong>
-                        <span>{car.horsePower}hp</span>
-                      </div>
-                      <div className="spec-item">
-                        <strong>{translations.carComponent.torque}:</strong>
-                        <span>{car.torque}</span>
-                      </div>
-                      <div className="spec-item">
-                        <strong>{translations.carComponent.zeroToHundred}:</strong>
-                        <span>{car.zeroToHundred}</span>
-                      </div>
-                    </div>
-                    
-                    {car.modifications && car.modifications.length > 0 && (
-                      <div className="mods-section">
-                        <h4>{translations.carComponent.modifications}</h4>
-                        <div className="mods-chips">
-                          {JSON.parse(car.modifications).map((mod: string, index: number) => (
-                            <IonBadge key={index} color="primary">{mod}</IonBadge>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {car.story && (
-                      <div className="story-section">
-                        <h4>{translations.carComponent.story}</h4>
-                        <p>{car.story}</p>
-                      </div>
-                    )}
-                  </IonCardContent>
-                </IonCard>
+                <VehicleCard key={car.id} vehicle={car} handleDelete={handleDelete} handleEdit={handleEdit} />
               ))}
             </div>
 
