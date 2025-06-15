@@ -5,7 +5,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 import world.horosho.CarMeeter.DB.Repositories.FCMRepository;
-import world.horosho.CarMeeter.DB.Repositories.UserRepository;
+import world.horosho.CarMeeter.DB.Repositories.user.UserRepository;
 
 @Service
 @RequiredArgsConstructor

@@ -2,14 +2,15 @@ package world.horosho.CarMeeter.Services.entities;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.core.io.buffer.DataBufferUtils;
 import org.springframework.http.codec.multipart.FilePart;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import world.horosho.CarMeeter.DB.Models.POST.*;
-import world.horosho.CarMeeter.DB.Repositories.UserRepository;
-import world.horosho.CarMeeter.DB.Repositories.VehicleRepository;
-import world.horosho.CarMeeter.DB.Repositories.VehicleWithMediaRepository;
+import world.horosho.CarMeeter.DB.Repositories.user.UserRepository;
+import world.horosho.CarMeeter.DB.Repositories.vehicle.VehicleRepository;
+import world.horosho.CarMeeter.DB.Repositories.vehicle.VehicleWithMediaRepository;
 import world.horosho.CarMeeter.Services.aws.S3Service;
 
 @Slf4j
@@ -89,25 +90,24 @@ public class VehicleService {
     }
 
     private Mono<VehicleMedia> uploadPhotoAndCreateMedia(FilePart photo, String vehicleUuid) {
-        return photo.content()
-            .next()
-            .flatMap(dataBuffer ->
-                s3Service.uploadFileToS3(dataBuffer.asInputStream())
-                    .map(url -> new VehicleMedia(vehicleUuid, url))
-                    .doOnSuccess(media -> log.debug("Created media record for vehicle: {}", vehicleUuid))
-            );
+        return DataBufferUtils.join(photo.content())
+                .flatMap(dataBuffer -> {
+                    try {
+                        return s3Service.uploadFileToS3(dataBuffer.asInputStream())
+                                .map(url -> new VehicleMedia(vehicleUuid, url))
+                                .doOnSuccess(media -> log.debug("Created media record for vehicle: {}", vehicleUuid));
+                    } finally {
+                        DataBufferUtils.release(dataBuffer);
+                    }
+                });
     }
+
 
 
     private Mono<Vehicle> getVehicleByUuid(String uuid) {
         return vehicleRepository.findByUuid(uuid)
             .switchIfEmpty(Mono.error(new RuntimeException("Vehicle not found with UUID: " + uuid)));
     }
-
-//    private Mono<VehiclesWithMedia> getVehicleWithMedia(String uuid) {
-//        return vehicleRepository.findMediaByUuid(uuid)
-//                .switchIfEmpty(Mono.error(new RuntimeException("Vehicle not found with UUID: " + uuid)));
-//    }
 
     private Mono<Vehicle> formToVehicleClass(VehicleUploadForm form, int userId) {
         return Mono.fromSupplier(() ->

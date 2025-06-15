@@ -1,4 +1,4 @@
-package world.horosho.CarMeeter.DB.Repositories;
+package world.horosho.CarMeeter.DB.Repositories.user;
 
 import org.springframework.data.repository.reactive.ReactiveCrudRepository;
 import reactor.core.publisher.Flux;

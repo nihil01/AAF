@@ -118,7 +118,7 @@ public class RedisService {
 
     //FRIENDS RETRIEVAL
 
-public Mono<Void> setFriendshipAwaiting(String myFriendshipUUID, String friendsUUID){
+    public Mono<Void> setFriendshipAwaiting(String myFriendshipUUID, String friendsUUID){
         // Add to a Redis set to store multiple mappings
         return redisOperations.opsForSet().isMember("friendship_awaiting:" + friendsUUID, myFriendshipUUID)
             .flatMap(aBoolean -> {
@@ -137,18 +137,53 @@ public Mono<Void> setFriendshipAwaiting(String myFriendshipUUID, String friendsU
     public Mono<Boolean> removeFriendshipAwaiting(String myFriendshipUUID, String friendsUUID){
         // Remove a specific friend request from the set
         return redisOperations.opsForSet().remove("friendship_awaiting:" + myFriendshipUUID, friendsUUID)
-                .map(removed -> removed > 0)
-                .onErrorResume(e -> {
-                    System.err.println("Error removing friendship request: " + e.getMessage());
+            .map(removed -> removed > 0)
+            .onErrorResume(e -> {
+                System.err.println("Error removing friendship request: " + e.getMessage());
+                return Mono.just(false);
+            })
+            .doOnSuccess(result -> {
+                if(result) {
+                    System.out.println("Successfully removed friendship request");
+                } else {
+                    System.out.println("No friendship request found to remove");
+                }
+            });
+    }
+
+
+    //USE ACTIVITY OPERATIONS
+    public Mono<Boolean> setOnline(int id){
+        return redisOperations.opsForSet().isMember("online_users", String.valueOf(id))
+            .flatMap(aBoolean -> {
+                if (!aBoolean) {
+                    return redisOperations.opsForSet().add("online_users", String.valueOf(id)).thenReturn(true);
+                } else {
                     return Mono.just(false);
-                })
-                .doOnSuccess(result -> {
-                    if(result) {
-                        System.out.println("Successfully removed friendship request");
-                    } else {
-                        System.out.println("No friendship request found to remove");
-                    }
-                });
+                }
+        });
+    }
+
+    public Mono<Boolean> setOffline(int id){
+        return redisOperations.opsForSet().isMember("online_users", String.valueOf(id))
+            .flatMap(aBoolean -> {
+                if (!aBoolean) {
+                    return redisOperations.opsForSet().remove("online_users", String.valueOf(id)).thenReturn(true);
+                } else {
+                    return Mono.just(false);
+                }
+            });
+    }
+
+    public Mono<Boolean> checkOnline(int id){
+        return redisOperations.opsForSet().members("online_users")
+            .collectList()
+            .map(userList -> userList.contains(String.valueOf(id)))
+            .switchIfEmpty(Mono.defer(() -> Mono.just(false)))
+            .onErrorResume(e -> {
+                System.err.println("Error checking online users: " + e.getMessage());
+                return Mono.just(false);
+            });
     }
 
 

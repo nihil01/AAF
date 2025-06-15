@@ -1,9 +1,11 @@
-package world.horosho.CarMeeter.DB.Repositories;
+package world.horosho.CarMeeter.DB.Repositories.vehicle;
 
+import org.springframework.data.r2dbc.repository.Modifying;
 import org.springframework.data.r2dbc.repository.Query;
 import org.springframework.data.repository.reactive.ReactiveCrudRepository;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import world.horosho.CarMeeter.DB.Models.GET.VehicleProfile;
 import world.horosho.CarMeeter.DB.Models.POST.Vehicle;
 import world.horosho.CarMeeter.DB.Models.POST.VehiclesWithMedia;
 
@@ -34,4 +36,11 @@ public interface VehicleRepository extends ReactiveCrudRepository<Vehicle, Strin
     Mono<Vehicle> findByUuid(String uuid);
 
     Mono<Void> deleteByUuid(String uuid);
+
+    //Find a group of user vehicles (to display in profile)
+    @Query("SELECT v.make, v.model, v.year, v.engine_specs, v.horse_power, v.torque, v.zero_to_hundred, v.story, v.modifications, v.created_at, array_agg(vp.photo_url) as photo_urls \n" +
+            "FROM users u LEFT JOIN vehicles v ON u.id = v.id LEFT JOIN\n" +
+            "vehicle_photos vp ON v.uuid = vp.vehicle_uuid WHERE u.username = :username " + // Added missing space before GROUP BY
+            "GROUP BY v.make, v.model, v.year, v.engine_specs, v.horse_power, v.torque, v.zero_to_hundred, v.story, v.modifications, v.created_at")
+    Flux<VehicleProfile> findUserVehicleDataByUsername(String username);
 }

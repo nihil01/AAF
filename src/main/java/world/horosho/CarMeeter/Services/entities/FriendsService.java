@@ -9,7 +9,7 @@ import world.horosho.CarMeeter.DB.Models.GET.FriendsStruct;
 import world.horosho.CarMeeter.DB.Models.POST.Friends;
 import world.horosho.CarMeeter.DB.Redis.RedisService;
 import world.horosho.CarMeeter.DB.Repositories.FriendsRepository;
-import world.horosho.CarMeeter.DB.Repositories.UserRepository;
+import world.horosho.CarMeeter.DB.Repositories.user.UserRepository;
 import world.horosho.CarMeeter.Services.firebase.FirebaseService;
 
 import java.util.List;
@@ -32,6 +32,9 @@ public class FriendsService {
     }
 
     public Mono<ResponseEntity<String>> removeFriend(String userID, String friendID) {
+        System.out.println(userID);
+        System.out.println(friendID);
+
         return friendsRepository
             .deleteFriendship(userID, friendID)
             .map(result -> ResponseEntity.ok("Friend removed successfully"))

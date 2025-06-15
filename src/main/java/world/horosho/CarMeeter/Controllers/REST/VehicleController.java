@@ -35,9 +35,7 @@ public class VehicleController {
     public Flux<VehiclesWithMedia> getVehicles(@AuthenticationPrincipal UserResponse user){
 
         return vehicleService.get(user.getId())
-            .onErrorResume(e -> {
-                return Mono.error(new RuntimeException("Error getting vehicle: " + e.getMessage()));
-            });
+            .onErrorResume(e -> Mono.error(new RuntimeException("Error getting vehicle: " + e.getMessage())));
     }
 
     @DeleteMapping("/deleteVehicle/{uuid}")

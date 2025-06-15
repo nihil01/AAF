@@ -83,6 +83,7 @@ public class SilentPushController {
             userCords.entrySet()
                 .stream()
                 .filter(entry -> {
+                    System.out.println("Processing entry " + entry);
                     LatLng latLng = entry.getValue();
                     return Math.abs(latLng.latitude() - lat) <= delta
                             && Math.abs(latLng.longitude() - lon) <= delta;

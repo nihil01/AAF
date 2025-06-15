@@ -22,10 +22,11 @@ public interface FriendsRepository extends ReactiveCrudRepository<Friends, Long>
         """)
     Flux<Friend> findFriendship(String name);
 
-    //2.
+//2.
     @Query("""
             DELETE FROM friends
-            WHERE user_name = :userName AND friend_name = :friendName
+            WHERE (user_name = :userName AND friend_name = :friendName)
+            OR (user_name = :friendName AND friend_name = :userName)
         """)
     Mono<String> deleteFriendship(String userName, String friendName);
 }

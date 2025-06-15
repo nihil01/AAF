@@ -1,31 +1,44 @@
 package world.horosho.CarMeeter.Services.entities;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
+import org.springframework.core.io.buffer.DataBufferUtils;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
+import world.horosho.CarMeeter.DB.Models.GET.Profile;
+import world.horosho.CarMeeter.DB.Models.GET.VehicleProfile;
+import world.horosho.CarMeeter.DB.Models.POST.Socials;
 import world.horosho.CarMeeter.DB.Models.POST.User;
 import world.horosho.CarMeeter.DB.Models.COMMON.UserResponse;
+import world.horosho.CarMeeter.DB.Models.PUT.BioRequest;
+import world.horosho.CarMeeter.DB.Models.PUT.SocialNetworks;
 import world.horosho.CarMeeter.DB.Redis.RedisService;
-import world.horosho.CarMeeter.DB.Repositories.UserRepository;
+import world.horosho.CarMeeter.DB.Repositories.user.UserRepository;
+import world.horosho.CarMeeter.DB.Repositories.user.UserSocialRepository;
+import world.horosho.CarMeeter.DB.Repositories.vehicle.VehicleRepository;
+import world.horosho.CarMeeter.Services.aws.S3Service;
 import world.horosho.CarMeeter.Services.mail.MailRequest;
 import world.horosho.CarMeeter.Services.mail.MailService;
 import world.horosho.CarMeeter.Services.mail.RecoveryRequest;
 
 import java.time.Instant;
-import java.util.HashMap;
-import java.util.Locale;
-import java.util.Map;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
-public class UserService implements UserUtilities{
+public class UserService implements UserUtilities {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final VehicleRepository vehicleRepository;
+    private final UserSocialRepository userSocialRepository;
 
     private final MailService mailService;
     private final RedisService redisService;
+    private final S3Service s3Service;
 
     //authentication logic
 
@@ -42,7 +55,7 @@ public class UserService implements UserUtilities{
                     checkUserPasswordLength(user.getPassword())
                         .flatMap(aBoolean -> {
                             System.out.println("user not found!");
-                            if (aBoolean){
+                            if (aBoolean) {
                                 //* check for otp status
                                 return redisService.getEmailCodeRegistrationPending(user.getEmail()).flatMap(s -> {
                                     System.out.println("otp status: " + s);
@@ -53,29 +66,29 @@ public class UserService implements UserUtilities{
                                         user.setPassword(passwordEncoder.encode(user.getPassword()));
 
                                         return this.normalizeUserName(user.getUsername())
-                                            .flatMap(s1 -> {
-                                                user.setUsername(s1);
-                                                return Mono.just(user);
-                                            })
-                                            .flatMap(userRepository::save)
-                                            .onErrorResume(e -> {
-                                                System.err.println("SQL Error during user save: " + e.getMessage());
-                                                return Mono.empty();
-                                            })
-                                            .flatMap(savedUser -> userRepository.findByEmail(savedUser.getEmail())
-                                            .flatMap(this::mapToUserResponse));
+                                                .flatMap(s1 -> {
+                                                    user.setUsername(s1);
+                                                    return Mono.just(user);
+                                                })
+                                                .flatMap(userRepository::save)
+                                                .onErrorResume(e -> {
+                                                    System.err.println("SQL Error during user save: " + e.getMessage());
+                                                    return Mono.empty();
+                                                })
+                                                .flatMap(savedUser -> userRepository.findByEmail(savedUser.getEmail())
+                                                        .flatMap(this::mapToUserResponse));
 
-                                    } else {
-                                        System.out.println("Not equals !!");
-                                        //* handle invalid code
-                                        return Mono.just(new UserResponse(0, "", "",
-                                                Instant.now().toString(), false));
-                                    }
-                                })
-                                .switchIfEmpty(Mono.defer(() -> mailService.sendEmail(new MailRequest(user.getUsername(), user.getEmail(),
-                                        "", user.getIpAddress(), "CONFIRM_EMAIL"))
-                                ));
-                            }else{
+                                        } else {
+                                            System.out.println("Not equals !!");
+                                            //* handle invalid code
+                                            return Mono.just(new UserResponse(0, "", "",
+                                                    Instant.now().toString(), false));
+                                        }
+                                    })
+                                    .switchIfEmpty(Mono.defer(() -> mailService.sendEmail(new MailRequest(user.getUsername(), user.getEmail(),
+                                            "", user.getIpAddress(), "CONFIRM_EMAIL"))
+                                    ));
+                            } else {
                                 //* invalid password length
                                 return Mono.just(new UserResponse(0, "", "", Instant.now().toString(),
                                         false));
@@ -84,19 +97,20 @@ public class UserService implements UserUtilities{
                 )
             );
     }
-    public Mono<UserResponse> loginUser(User user){
-        return userRepository.findByEmail(user.getEmail())
-            .flatMap(existingUser -> {
 
-                if(passwordEncoder.matches(user.getPassword(),existingUser.getPassword())){
-                    return mapToUserResponse(existingUser);
-                }else{
-                    return Mono.just(new UserResponse(0, "", "",
-                        Instant.now().toString(), false));
-                }
-            })
-            .switchIfEmpty(Mono.just(new UserResponse(0, "", "",
-                Instant.now().toString(), false)));
+    public Mono<UserResponse> loginUser(User user) {
+        return userRepository.findByEmail(user.getEmail())
+                .flatMap(existingUser -> {
+
+                    if (passwordEncoder.matches(user.getPassword(), existingUser.getPassword())) {
+                        return mapToUserResponse(existingUser);
+                    } else {
+                        return Mono.just(new UserResponse(0, "", "",
+                                Instant.now().toString(), false));
+                    }
+                })
+                .switchIfEmpty(Mono.just(new UserResponse(0, "", "",
+                        Instant.now().toString(), false)));
     }
 
 
@@ -105,9 +119,9 @@ public class UserService implements UserUtilities{
         String emailRegex = "^[A-Za-z0-9+_.-]+@(.+)$";
         if (email != null && !email.isEmpty() && email.matches(emailRegex)) {
             return userRepository.findByEmail(email)
-                .flatMap(user ->
-                    mailService.sendEmail(new MailRequest(user.getUsername(), user.getEmail(),
-                        "", ip, "RESET_PASS")));
+                    .flatMap(user ->
+                            mailService.sendEmail(new MailRequest(user.getUsername(), user.getEmail(),
+                                    "", ip, "RESET_PASS")));
         }
         return Mono.just(new UserResponse(0, "", "",
                 Instant.now().toString(), false));
@@ -150,14 +164,14 @@ public class UserService implements UserUtilities{
             });
     }
 
-    public Mono<UserResponse> retrieveUser(String email){
+    public Mono<UserResponse> retrieveUser(String email) {
         return userRepository.findByEmail(email)
             .flatMap(this::mapToUserResponse)
             .switchIfEmpty(Mono.just(new UserResponse(0, "", ""
                     , "", false)));
     }
 
-    public Mono<UserResponse> saveUser(User user){
+    public Mono<UserResponse> saveUser(User user) {
         return normalizeUserName(user.getUsername())
             .map(normalizedUsername -> {
                 user.setUsername(normalizedUsername);
@@ -171,8 +185,106 @@ public class UserService implements UserUtilities{
             .flatMap(this::mapToUserResponse);
     }
 
-    private Mono<String> normalizeUserName(String username){
+    private Mono<String> normalizeUserName(String username) {
         return Mono.just(username.toLowerCase(Locale.ROOT).replaceAll(" ", username.contains(" ") ? "_" : ""));
     }
 
+
+    /**
+     * The Profile retrieval section
+         * Contains methods for retrieving user profile information including:
+         * - Full user profile with vehicles and social data
+         * - User's vehicles
+         * - User's biographical and social information
+     */
+    //Profile user retrieval
+    //*************************************************************************************************//
+    public Mono<Profile> getUserProfileByUsername(String username) {
+        return userRepository.findByUsername(username).flatMap(projection -> {
+            System.out.println(projection);
+
+            Mono<List<VehicleProfile>> vehicles = getUserVehicles(projection.getUsername());
+            Mono<Socials> bio = getUserBio(projection.getId());
+            Mono<Boolean> online = redisService.checkOnline(projection.getId());
+
+            return Mono.zip(vehicles, bio, online).map(tuples -> {
+
+                List<VehicleProfile> vehicleProfiles = tuples.getT1();
+                Socials socials = tuples.getT2();
+                Boolean status = tuples.getT3();
+
+                return Profile.builder()
+                    .registered(projection.getRegistered())
+                    .online(status)
+                    .avatar(socials.getAvatar())
+                    .about(socials.getAbout())
+                    .social_networks(socials.getSocial_networks())
+                    .vehicles(vehicleProfiles)
+                    .username(projection.getUsername())
+                    .build();
+            });
+        });
+    }
+
+    private Mono<List<VehicleProfile>> getUserVehicles(String username) {
+        return vehicleRepository.findUserVehicleDataByUsername(username).collectList()
+                .switchIfEmpty(Mono.just(Collections.emptyList()));
+    }
+
+    private Mono<Socials> getUserBio(long id) {
+        return userSocialRepository.findByUserId(id).switchIfEmpty(Mono.just(
+            Socials.builder()
+                .about("")
+                .userId(id)
+                .social_networks("")
+                .avatar("")
+                .build()
+        ));
+    }
+    //*************************************************************************************************//
+
+    //updating user bio
+    public Mono<Void> updateUserBio(long id, BioRequest bio) throws JsonProcessingException {
+        //check for valid social networks
+        List<String> allowedSocials = List.of("instagram", "facebook");
+
+        ObjectMapper mapper = new ObjectMapper();
+
+        List<SocialNetworks> socialNetworks = mapper.readValue(bio.social_networks(), new TypeReference<>() {});
+        System.out.println("social nets: " + socialNetworks);
+
+
+        List<String> invalidSocials = socialNetworks.stream().map(SocialNetworks::type)
+                .filter(name -> !allowedSocials.contains(name.toLowerCase(Locale.ROOT))).toList();
+
+        if (!invalidSocials.isEmpty()) {
+            return Mono.error(new RuntimeException("Invalid social networks: "
+                    + String.join(", ", invalidSocials)));
+        }
+
+        //save user avatar
+        return DataBufferUtils.join(bio.avatar().content()).flatMap(dataBuffer ->
+            s3Service.uploadFileToS3(dataBuffer.asInputStream()).flatMap(avatarUrl -> {
+                try {
+                    return userSocialRepository.save(
+                        Socials.builder()
+                            .about(bio.about())
+                            .social_networks(mapper.writeValueAsString(socialNetworks))
+                            .avatar(avatarUrl)
+                            .userId(id)
+                            .build()
+                    );
+                } catch (JsonProcessingException e) {
+                    return Mono.error(new RuntimeException(e));
+                }
+            }).then()
+        );
+    }
+
+    /* User online handling section */
+    /* - Gets data from redis */
+
+    public Mono<Boolean> manageActivityStatus(int id, boolean state) {
+        return state ? redisService.setOnline(id) : redisService.setOffline(id);
+    }
 }

@@ -47,7 +47,7 @@ public class AuthController {
                         return getMono(userResponse);
 
                     }else if(userResponse.getRegistered().equals("EMAIL_AWAITING")){
-                        return Mono.just(ResponseEntity.status(HttpStatus.OK).body(new UserResponse(
+                        return Mono.just(ResponseEntity.ok(new UserResponse(
                                 0, "", "","",true)));
                     }
                     else {
@@ -61,7 +61,7 @@ public class AuthController {
                             .flatMap(this::getMono);
                 } else {
                     yield Mono.just(ResponseEntity.badRequest().body(new UserResponse(0,
-                            "Missing idToken for Google OAuth", null, null, false
+                        "Missing idToken for Google OAuth", null, null, false
                     )));
                 }
             }
@@ -83,18 +83,16 @@ public class AuthController {
     @GetMapping("/refresh")
     public Mono<ResponseEntity<Void>> refresh(ServerWebExchange exchange) {
         return getReadyToken(exchange)
-            .flatMap(strings -> {
-                return jwtService.refreshToken(strings[0]).flatMap(newToken -> {
-                    if (!newToken.equals("INVALID_REFRESH_TOKEN")){
-                        exchange.getResponse()
-                                .getHeaders()
-                                .add("authorization", "Bearer %s".formatted(newToken));
-                        return Mono.just(ResponseEntity.ok().build());
-                    }
+            .flatMap(strings -> jwtService.refreshToken(strings[0]).flatMap(newToken -> {
+                if (!newToken.equals("INVALID_REFRESH_TOKEN")){
+                    exchange.getResponse()
+                            .getHeaders()
+                            .add("authorization", "Bearer %s".formatted(newToken));
+                    return Mono.just(ResponseEntity.ok().build());
+                }
 
-                return Mono.just(ResponseEntity.badRequest().build());
-            });
-        });
+            return Mono.just(ResponseEntity.badRequest().build());
+        }));
     }
 
     @GetMapping("/forgot-password")
@@ -110,20 +108,30 @@ public class AuthController {
     }
 
     @PostMapping("/password-recovery")
-    private Mono<ResponseEntity<Map<String, Boolean>>> passwordRecovery(
+    private Mono<Map<String, Boolean>> passwordRecovery(
             @Valid @RequestBody RecoveryRequest recoveryRequest
     ) {
         System.out.println(recoveryRequest);
 
         return userService.recoverPassword(recoveryRequest)
-                .map(userResponse -> ResponseEntity.ok().body(userResponse))
-                .defaultIfEmpty(ResponseEntity.ok()
-                    .body(Map.of("success", false)))
-                .onErrorResume(e -> Mono.just(ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("error", true))));
+                .map(userResponse ->userResponse)
+                .defaultIfEmpty(Map.of("success", false))
+                .onErrorResume(e -> Mono.just(Map.of("error", true)));
     }
 
-    //UTILITY METHOD
+    //*********************************************************//
+    @GetMapping("/setUserOnline")
+    public Mono<Boolean> setUserOnline(@RequestParam int id) {
+        return userService.manageActivityStatus(id, true);
+    }
+
+    @GetMapping("/setUserOffline")
+    public Mono<Boolean> setUserOffline(@RequestParam int id) {
+        return userService.manageActivityStatus(id, false);
+    }
+    //*********************************************************//
+
+    //UTILITY METHODS
     private Mono<ResponseEntity<UserResponse>> getMono(UserResponse userResponse) {
         if (userResponse.getSuccess()) {
             return Mono.zip(
@@ -136,7 +144,7 @@ public class AuthController {
                 .body(userResponse)
             );
         } else {
-            return Mono.just(ResponseEntity.badRequest().body(userResponse));
+            return Mono.just(ResponseEntity.ok(userResponse));
         }
     }
 
