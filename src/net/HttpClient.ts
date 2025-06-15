@@ -5,8 +5,6 @@ import type {AvailableUser, FriendsStruct} from "./FriendsStruct.ts";
 import type {UserCords} from "./AppStateConnection.ts";
 import type { ProfileData, VehicleWithMedia } from '../types/profile';
 
-
-
 export class HttpClient {
 
     private AUTH_BASE_URL = 'http://10.20.30.2:8080/api/v1/auth';
@@ -14,6 +12,7 @@ export class HttpClient {
     private FIREBASE_BASE_URL = 'http://10.20.30.2:8080/api/v1/firebase';
     private SILENT_PUSH_BASE_URL = 'http://10.20.30.2:8080/api/v1/silent';
     private CARS_BASE_URL = 'http://10.20.30.2:8080/api/v1/vehicles';
+    private PROFILE_BASE_URL = 'http://10.20.30.2:8080/api/v1/profile';
 
 
  //AUTHENTICATION
@@ -253,24 +252,33 @@ export class HttpClient {
             await this.refreshToken();
             const accessToken = await SharedPreferences.getToken('access');
             
-            // Create new request with the same properties
-            const newRequest = new Request(request.url, {
+            // For FormData, we need to clone it from the original request
+            if (request.body instanceof FormData) {
+                // Clone the FormData
+                const newFormData = new FormData();
+                for (const [key, value] of request.body.entries()) {
+                    newFormData.append(key, value);
+                }
+                // Create a new request with the cloned FormData
+                return await fetch(new Request(request.url, {
+                    method: request.method,
+                    headers: {
+                        ...Object.fromEntries(request.headers),
+                        'Authorization': `Bearer ${accessToken}`
+                    },
+                    body: newFormData
+                }));
+            }
+
+            // For non-FormData requests, use the original body
+            return await fetch(new Request(request.url, {
                 method: request.method,
                 headers: {
                     ...Object.fromEntries(request.headers),
                     'Authorization': `Bearer ${accessToken}`
                 },
-                // For FormData, we need to use the original request's body
                 body: request.body
-            });
-
-            // If the original request was a FormData, we need to ensure it's still valid
-            if (request.body instanceof FormData) {
-                // The FormData is still valid as it's a reference to the original
-                return await fetch(newRequest);
-            }
-
-            return await fetch(newRequest);
+            }));
         }
         return response;
     }
@@ -389,12 +397,12 @@ export class HttpClient {
         await SharedPreferences.clearAll();
     }
 
-    async getProfileData(username: string): Promise<ProfileData> {
+    async getProfileData(username?: string): Promise<ProfileData> {
         try {
 
             const accessToken = await SharedPreferences.getToken('access');
 
-            const request = new Request(`${this.AUTH_BASE_URL}/profile/${username}`, {
+            const request = new Request(`${this.PROFILE_BASE_URL}?username=${username}`, {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',
@@ -417,4 +425,87 @@ export class HttpClient {
             throw error;
         }
     }
+
+    async updateProfileBio(bioData: FormData): Promise<void> {
+        try {
+            const accessToken = await SharedPreferences.getToken('access');
+            
+            const request = new Request(`${this.PROFILE_BASE_URL}/updateBio`, {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `Bearer ${accessToken}`
+                },
+                body: bioData
+            });
+
+            const response = await this.handleResponse(await fetch(request), request);
+
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => null);
+                throw new Error(errorData?.message || 'Failed to update profile bio');
+            }
+        } catch (error) {
+            console.error('Error updating profile bio:', error);
+            throw error;
+        }
+    }
+
+    async setUserOnline(): Promise<boolean> {
+        try {
+            const userData = await SharedPreferences.getUserData();
+            const accessToken = await SharedPreferences.getToken('access');
+        
+            if (!userData) {
+                throw new Error('No user data found');
+            }
+
+            const request = new Request(`${this.AUTH_BASE_URL}/setUserOnline?id=${userData.id}`, {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${accessToken}`
+                }
+            });
+
+            const response = await this.handleResponse(await fetch(request), request);
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            return await response.json();
+        } catch (error) {
+            console.error('Error setting user online:', error);
+            throw error;
+        }
+    }
+
+    async setUserOffline(): Promise<boolean> {
+        try {
+            const userData = await SharedPreferences.getUserData();
+            const accessToken = await SharedPreferences.getToken('access');
+        
+            if (!userData) {
+                throw new Error('No user data found');
+            }
+
+            const request = new Request(`${this.AUTH_BASE_URL}/setUserOffline?id=${userData.id}`, {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${accessToken}`
+                }
+            });
+
+            const response = await this.handleResponse(await fetch(request), request);
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            return await response.json();
+        } catch (error) {
+            console.error('Error setting user offline:', error);
+            throw error;
+        }
+    }
+            
 }

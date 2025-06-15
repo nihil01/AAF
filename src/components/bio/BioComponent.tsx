@@ -1,36 +1,39 @@
 import { IonButton, IonInput, IonTextarea, IonIcon, IonButtons, IonTitle, IonHeader, IonPage, IonToolbar, IonContent, IonItem, IonLabel } from "@ionic/react";
 import { arrowBack, add, trash } from "ionicons/icons";
 import React, { useRef, useState } from "react";
+import { HttpClient } from "../../net/HttpClient";
 
 const SOCIAL_TYPES = [
   { label: 'Instagram', value: 'instagram' },
-  { label: 'Telegram', value: 'telegram' },
-  { label: 'Twitter', value: 'twitter' },
   { label: 'Facebook', value: 'facebook' },
-  { label: 'LinkedIn', value: 'linkedin' },
 ];
 
 export interface BioFormData {
-  avatar: string | null;
-  bio: string;
+  avatar: File | null;
+  about: string;
   socials: { type: string; value: string }[];
 }
 
 export const BioComponent = ({ setComponent }: { setComponent: (value: string | null) => void }) => {
   const [form, setForm] = useState<BioFormData>({
     avatar: null,
-    bio: '',
+    about: '',
     socials: [],
   });
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      // Store the actual file
+      setForm(f => ({ ...f, avatar: file }));
+      
+      // Create preview
       const reader = new FileReader();
       reader.onload = (ev) => {
-        setForm(f => ({ ...f, avatar: ev.target?.result as string }));
+        setAvatarPreview(ev.target?.result as string);
       };
       reader.readAsDataURL(file);
     }
@@ -39,7 +42,7 @@ export const BioComponent = ({ setComponent }: { setComponent: (value: string | 
   const handleSocialChange = (idx: number, key: 'type' | 'value', value: string) => {
     setForm(f => ({
       ...f,
-      socials: f.socials.map((s, i) => i === idx ? { ...s, [key]: value } : s)
+      socials: f.socials.map((s, i) => i === idx && (s.type !== value || s.value !== value) ? { ...s, [key]: value } : s)
     }));
   };
 
@@ -51,14 +54,40 @@ export const BioComponent = ({ setComponent }: { setComponent: (value: string | 
     setForm(f => ({ ...f, socials: f.socials.filter((_, i) => i !== idx) }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
-    // Placeholder: send form to backend here
-    setTimeout(() => {
+    try {
+      const formData = new FormData();
+      
+      
+      // Handle avatar file
+      if (form.avatar) {
+      
+        formData.append('avatar', form.avatar);
+      }
+      
+      // Handle about text
+      formData.append('about', form.about || '');
+      formData.append('social_networks', JSON.stringify(form.socials));
+      
+      await new HttpClient().updateProfileBio(formData);
+      
+      // Reset form after successful submission
+      setForm({
+        avatar: null,
+        about: '',
+        socials: [],
+      });
+      setAvatarPreview(null);
+      
+      setComponent(null); // Close the bio component after successful update
+    } catch (error) {
+      console.error('Error updating bio:', error);
+      // You might want to show an error message to the user here
+    } finally {
       setIsSubmitting(false);
-      setComponent(null); // Go back after save
-    }, 1000);
+    }
   };
 
   return (
@@ -76,11 +105,9 @@ export const BioComponent = ({ setComponent }: { setComponent: (value: string | 
       <IonContent fullscreen>
         <form onSubmit={handleSubmit} style={{ maxWidth: 500, margin: '32px auto', background: 'var(--ion-card-background, #fff)', borderRadius: 16, boxShadow: '0 2px 8px rgba(0,0,0,0.07)', padding: 24 }}>
           <div style={{ display: 'flex', alignItems: 'center',  gap: 24, marginBottom: 24 }}>
-            
             <div style={{ width: 80, height: 80, borderRadius: '50%', background: '#eee', overflow: 'hidden', flexShrink: 0, position: 'relative', cursor: 'pointer' }} onClick={() => fileInputRef.current?.click()}>
-
-              {form.avatar ? (
-                <img src={form.avatar} alt="Avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              {avatarPreview ? (
+                <img src={avatarPreview} alt="Avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
               ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
                     <p>Avatar</p>
@@ -92,7 +119,7 @@ export const BioComponent = ({ setComponent }: { setComponent: (value: string | 
           </div>
           <IonItem lines="none">
             <IonLabel position="stacked">About Me</IonLabel>
-            <IonTextarea value={form.bio} onIonChange={e => setForm(f => ({ ...f, bio: e.detail.value || '' }))} autoGrow required />
+            <IonTextarea value={form.about} onIonChange={e => setForm(f => ({ ...f, about: e.detail.value || '' }))} autoGrow required />
           </IonItem>
           <div style={{ margin: '24px 0 8px', fontWeight: 500 }}>Social Links</div>
           {form.socials.map((s, idx) => (

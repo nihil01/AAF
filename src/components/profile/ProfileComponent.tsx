@@ -11,111 +11,125 @@ import {
     IonPage,
     IonTitle,
     IonToolbar,
-    IonSkeletonText,
     IonToast,
     IonRefresher,
-    IonRefresherContent
+    IonRefresherContent,
+    IonButton
 } from '@ionic/react';
 import type { RefresherEventDetail } from '@ionic/react';
 import { useParams } from 'react-router-dom';
-import { star, location, car } from 'ionicons/icons';
+import { car, logoInstagram, logoFacebook, logoTwitter, logoLinkedin, globe } from 'ionicons/icons';
 import { VehicleCard } from "../vehicles/VehicleCard";
 import { useLanguage } from '../../context/LanguageContext';
-import type { ProfileData, VehicleWithMedia } from "../../types/profile";
+import type { ProfileData } from "../../types/profile";
+import { HttpClient } from '../../net/HttpClient';
+import { CustomLoaderComponent } from '../loader/CustomLoaderComponent';
 
+interface SocialNetwork {
+    type: 'instagram' | 'facebook' | 'twitter' | 'linkedin' | 'other';
+    value: string;
+}
 
-// API Service (mock for now, replace with actual API calls)
+const getSocialIcon = (type: string) => {
+    switch (type.toLowerCase()) {
+        case 'instagram':
+            return logoInstagram;
+        case 'facebook':
+            return logoFacebook;
+        case 'twitter':
+            return logoTwitter;
+        case 'linkedin':
+            return logoLinkedin;
+        default:
+            return globe;
+    }
+};
+
+const parseSocialNetworks = (socialNetworks: string): SocialNetwork[] => {
+    try {
+        return JSON.parse(socialNetworks);
+    } catch (error) {
+        console.error('Error parsing social networks:', error);
+        return [];
+    }
+};
+
+const httpClient = new HttpClient();
+
+// API Service
 const fetchUserProfile = async (username?: string): Promise<ProfileData> => {
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    // Mock data
-    return {
-        username: username || 'currentUser',
-        registered: '2019',
-        vehicles: [
-            {
-                uuid: '1',
-                id: 1,
-                make: 'Tesla',
-                model: 'Model 3',
-                year: 2022,
-                engineSpecs: 'Dual Motor AWD',
-                horsePower: 450,
-                torque: '639 Nm',
-                zeroToHundred: '3.3s',
-                story: 'A modern electric sedan with great range and performance.',
-                modifications: JSON.stringify(['Performance Upgrade', 'Tinted Windows']),
-                created_at: '2023-01-01T12:00:00Z',
-                photo_urls: [
-                    'https://img.heroui.chat/image/car?w=600&h=400&u=1',
-                    'https://upload.wikimedia.org/wikipedia/commons/thumb/a/a4/2019_Toyota_Corolla_Icon_Tech_VVT-i_Hybrid_1.8.jpg/960px-2019_Toyota_Corolla_Icon_Tech_VVT-i_Hybrid_1.8.jpg'
-                ]
-            },
-            {
-                uuid: '2',
-                id: 2,
-                make: 'Jeep',
-                model: 'Wrangler',
-                year: 2020,
-                engineSpecs: '3.6L V6',
-                horsePower: 285,
-                torque: '353 Nm',
-                zeroToHundred: '6.8s',
-                story: 'A rugged off-road SUV built for adventure.',
-                modifications: JSON.stringify(['Lift Kit', 'Off-road Tires']),
-                created_at: '2022-06-15T09:30:00Z',
-                photo_urls: [
-                    'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQcK8LuTRihbc5t5dlS6Lw6Q710u02oN80LJw&s'
-                ]
-            }
-        ]
-    };
+    try {
+        return await httpClient.getProfileData(username || '');
+    } catch (error) {
+        console.error('Error fetching profile:', error);
+        throw new Error('Failed to fetch profile data');
+    }
 };
 
 // Sub-components
-const ProfileHeader: React.FC<{ profile: ProfileData, translations: any }> = ({ profile, translations }) => (
-    <div className="ion-padding-bottom ion-margin-bottom ion-border-bottom">
-        <div className="ion-flex">
-            <IonAvatar className="ion-margin-end">
-                <img src={profile.avatar} alt={profile.fullName} />
-                <IonBadge color="success" className="avatar-badge" />
-            </IonAvatar>
-            <div>
-                <h2 style={{ margin: 0, fontWeight: 'bold', fontSize: '1.3rem' }}>{profile.fullName}</h2>
-               
-                <div className="ion-flex ion-align-items-center ion-margin-top">
-                    {[...Array(5)].map((_, i) => (
-                        <IonIcon 
-                            key={i} 
-                            icon={star} 
-                            color={i < Math.floor(profile.rating) ? "warning" : "medium"} 
-                            className="ion-margin-end-xs" 
-                        />
-                    ))}
-                  
+const ProfileHeader: React.FC<{ profile: ProfileData, translations: any }> = ({ profile, translations }) => {
+    const socialNetworks = parseSocialNetworks(profile.social_networks);
+
+    return (
+        <div className="ion-padding-bottom ion-margin-bottom ion-border-bottom">
+            <div className="ion-flex">
+                <IonAvatar className="ion-margin-end" style={{ position: 'relative' }}>
+                    <img src={profile.avatar.length > 0 ? profile.avatar : "https://aaf-app.s3.eu-central-1.amazonaws.com/default-avatar.png"} alt={profile.username} />
+                    <IonBadge 
+                        color={profile.online ? "success" : "danger"} 
+                        className="avatar-badge"
+                        title={profile.online ? "Online" : "Offline"}
+                    />
+                </IonAvatar>
+                <div>
+                    <h2 style={{ margin: 0, fontWeight: 'bold', fontSize: '1.3rem' }}>
+                        {profile.username}
+                        <span style={{ 
+                            fontSize: '0.9rem', 
+                            marginLeft: '8px', 
+                            color: profile.online ? 'var(--ion-color-success)' : 'var(--ion-color-danger)',
+                            fontWeight: 'normal'
+                        }}>
+                            {profile.online ? '• Online' : '• Offline'}
+                        </span>
+                    </h2>
+                    <p className="ion-text-muted">{translations.profile?.memberSince || 'Member since'} {new Date(profile.registered).toLocaleDateString()}</p>
+                    <div className="ion-flex ion-align-items-center ion-margin-top">
+                        {socialNetworks.length > 0 && (
+                            <div className="ion-flex ion-align-items-center">
+                                {socialNetworks.map((social, index) => (
+                                    <IonButton
+                                        key={`${social.type}-${index}`}
+                                        fill="clear"
+                                        size="small"
+                                        className="ion-margin-end"
+                                        
+                                        href={
+                                            social.type === 'instagram' ? `https://www.instagram.com/${social.value}` : 
+                                            social.type === 'facebook' ? `https://www.facebook.com/${social.value}` : 
+                                            social.type === 'twitter' ? `https://www.twitter.com/${social.value}` : 
+                                            social.type === 'linkedin' ? `https://www.linkedin.com/in/${social.value}` : ''
+                                        }
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                    >
+                                        <IonIcon 
+                                            icon={getSocialIcon(social.type)} 
+                                            color={social.type === 'instagram' ? 'instagram' : 
+                                                   social.type === 'facebook' ? 'facebook' : 
+                                                   social.type === 'twitter' ? 'twitter' : 
+                                                   social.type === 'linkedin' ? 'linkedin' : ''}
+                                        />
+                                    </IonButton>
+                                ))}
+                            </div>
+                        )}
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
-);
-
-// const ProfileStats: React.FC<{ stats: UserProfile['stats'], translations: any }> = ({ stats, translations }) => (
-//     <div className="ion-flex ion-justify-content-around ion-text-center">
-//         <div>
-//             <p className="ion-text-large ion-font-bold">{stats.trips}</p>
-//             <p className="ion-text-small">{translations.profile && translations.profile.trips ? translations.profile.trips : 'Trips'}</p>
-//         </div>
-//         <div>
-//             <p className="ion-text-large ion-font-bold">{stats.vehicles}</p>
-//             <p className="ion-text-small">{translations.profile && translations.profile.vehicles ? translations.profile.vehicles : 'Vehicles'}</p>
-//         </div>
-//         <div>
-//             <p className="ion-text-large ion-font-bold">{stats.memberSince}</p>
-//             <p className="ion-text-small">{translations.profile && translations.profile.memberSince ? translations.profile.memberSince : 'Member Since'}</p>
-//         </div>
-//     </div>
-// );
+    );
+};
 
 // Main Component
 export const ProfilePage: React.FC = () => {
@@ -129,6 +143,21 @@ export const ProfilePage: React.FC = () => {
         try {
             setIsLoading(true);
             const data = await fetchUserProfile(userName);
+
+            // Validate vehicles - if backend returns null or empty array, or if vehicles are invalid
+            if (!data.vehicles || !Array.isArray(data.vehicles) || data.vehicles.length === 0) {
+                data.vehicles = [];
+            } else {
+                // Filter out any invalid vehicles (those missing required fields)
+                data.vehicles = data.vehicles.filter(vehicle => 
+                    vehicle && 
+                    typeof vehicle === 'object' && 
+                    vehicle.make && 
+                    vehicle.model 
+                );
+                
+            }
+
             setProfile(data);
             setError(null);
         } catch (err) {
@@ -153,13 +182,11 @@ export const ProfilePage: React.FC = () => {
             <IonPage>
                 <IonHeader>
                     <IonToolbar>
-                        <IonTitle>{translations.common.loading || 'Loading...'}</IonTitle>
+                        <IonTitle>{translations.common.profile || 'Profile'}</IonTitle>
                     </IonToolbar>
                 </IonHeader>
-                <IonContent>
-                    <div className="ion-padding">
-                        <IonSkeletonText animated style={{ width: '100%', height: '200px' }} />
-                    </div>
+                <IonContent fullscreen>
+                    <CustomLoaderComponent showOverlay={true} />
                 </IonContent>
             </IonPage>
         );
@@ -190,7 +217,7 @@ export const ProfilePage: React.FC = () => {
                             <p className="ion-text-wrap ion-text-muted">{profile.about}</p>
                         </div>
 
-                        {/* <ProfileStats stats={profile.stats} translations={translations} /> */}
+                        <p>{profile.vehicles && profile.vehicles.length > 0 ? `Vehicle count: ${profile.vehicles.length}` : 'No vehicles'}</p>
                     </IonCardContent>
                 </IonCard>
 

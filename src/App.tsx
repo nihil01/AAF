@@ -40,6 +40,7 @@ const AppContent: React.FC = () => {
     const [mapClicked, setMapClicked] = useState(false);
     const [showOnboarding, setShowOnboarding] = useState<boolean | null>(null);
     const { translations } = useLanguage();
+    const httpClient = new HttpClient();
 
     useEffect(() => {
         let appStateListener: any;
@@ -61,12 +62,36 @@ const AppContent: React.FC = () => {
                 console.log("DEVICE INFO:", deviceInfoString);
                 setDeviceInfo(deviceInfoString ?? 'unknown_device');
 
+                // Set user as online when app starts
+                if (tokenPresented) {
+                    try {
+                        await httpClient.setUserOnline();
+                    } catch (error) {
+                        console.error('Error setting user online:', error);
+                    }
+                }
+
                 // Initialize push notifications
                 await initPushNotifications();
 
                 // Set up app state listener
-                appStateListener = await CapApp.addListener('appStateChange', ({ isActive }) => {
+                appStateListener = await CapApp.addListener('appStateChange', async ({ isActive }) => {
                     console.log('App state changed. Is active:', isActive);
+                    if (!isActive && tokenPresented) {
+                        try {
+                            // Set user as offline when app goes to background or is closed
+                            await httpClient.setUserOffline();
+                        } catch (error) {
+                            console.error('Error setting user offline:', error);
+                        }
+                    } else if (isActive && tokenPresented) {
+                        try {
+                            // Set user as online when app comes back to foreground
+                            await httpClient.setUserOnline();
+                        } catch (error) {
+                            console.error('Error setting user online:', error);
+                        }
+                    }
                 });
             } catch (error) {
                 console.error('Error initializing app:', error);
@@ -81,14 +106,20 @@ const AppContent: React.FC = () => {
             if (appStateListener) {
                 appStateListener.remove();
             }
+            // Set user as offline when component unmounts (app is closed)
+            if (tokenPresented) {
+                httpClient.setUserOffline().catch(error => {
+                    console.error('Error setting user offline on unmount:', error);
+                });
+            }
         };
-    }, []);
+    }, [tokenPresented]);
 
     const initPushNotifications = async () => {
         const token = await SharedPreferences.getToken('refresh');
         if (!token) {
             //TODO: Remove this; DEBUG
-            setTokenPresented(true);
+            setTokenPresented(false);
             return;
         }
 

@@ -101,6 +101,10 @@ export const VehicleCard = ({ vehicle, handleDelete, handleEdit }:
                         <strong>{translations.carComponent.zeroToHundred}:</strong>
                         <span>{vehicle.zeroToHundred}</span>
                       </div>
+                      <div className="spec-item">
+                        <strong>Vehicle added:</strong>
+                        <span>{new Date(vehicle.created_at).toLocaleDateString()}</span>
+                      </div>
                     </div>
                     
                     {vehicle.modifications && vehicle.modifications.length > 0 && (

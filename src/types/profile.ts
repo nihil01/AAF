@@ -20,5 +20,9 @@ export interface VehicleWithMedia extends Vehicle {
 export interface ProfileData{
     username: string;
     registered: string;
+    online: boolean;
+    avatar: string;
+    about: string;
+    social_networks: string;
     vehicles: VehicleWithMedia[];
 }

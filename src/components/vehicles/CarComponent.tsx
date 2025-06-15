@@ -87,43 +87,43 @@ const carFormSchema = z.object({
 type CarFormData = z.infer<typeof carFormSchema>;
 
 // Mock data to simulate backend
-const MOCK_VEHICLES: VehicleDetails[] = [
-  {
-    id: '1',
-    uuid: '1',
-    make: 'Tesla',
-    model: 'Model S',
-    year: 2022,
-    engineSpecs: 'Dual Motor AWD',
-    horsePower: 670,
-    torque: '850 Nm',
-    zeroToHundred: '3.1s',
-    story: 'A premium electric sedan with great performance and range.',
-    photo_urls: [
-      'https://www.google.com/url?sa=i&url=https%3A%2F%2Fleasecar.uk%2Fspecial-offers%2F&psig=AOvVaw1TqtQwkdXMiz9PlmnU8Edi&ust=1749886192436000&source=images&cd=vfe&opi=89978449&ved=0CBEQjRxqFwoTCPjA05bw7Y0DFQAAAAAdAAAAABAE',
-      'https://upload.wikimedia.org/wikipedia/commons/thumb/a/a4/2019_Toyota_Corolla_Icon_Tech_VVT-i_Hybrid_1.8.jpg/960px-2019_Toyota_Corolla_Icon_Tech_VVT-i_Hybrid_1.8.jpg'
-    ],
-    modifications: JSON.stringify(['Performance Upgrade', 'Tinted Windows']),
-    created_at: '2023-01-01T12:00:00Z'
-  },
-  {
-    id: '2',
-    uuid: '2',
-    make: 'BMW',
-    model: 'M3',
-    year: 2020,
-    engineSpecs: '3.0L Twin-Turbo I6',
-    horsePower: 473,
-    torque: '550 Nm',
-    zeroToHundred: '4.1s',
-    story: 'A sporty sedan with a legacy of performance and driving pleasure.',
-    photo_urls: [
-      'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQcK8LuTRihbc5t5dlS6Lw6Q710u02oN80LJw&s'
-    ],
-    modifications: JSON.stringify(['Carbon Fiber Spoiler']),
-    created_at: '2022-06-15T09:30:00Z'
-  }
-];
+// const MOCK_VEHICLES: VehicleDetails[] = [
+//   {
+//     id: '1',
+//     uuid: '1',
+//     make: 'Tesla',
+//     model: 'Model S',
+//     year: 2022,
+//     engineSpecs: 'Dual Motor AWD',
+//     horsePower: 670,
+//     torque: '850 Nm',
+//     zeroToHundred: '3.1s',
+//     story: 'A premium electric sedan with great performance and range.',
+//     photo_urls: [
+//       'https://www.google.com/url?sa=i&url=https%3A%2F%2Fleasecar.uk%2Fspecial-offers%2F&psig=AOvVaw1TqtQwkdXMiz9PlmnU8Edi&ust=1749886192436000&source=images&cd=vfe&opi=89978449&ved=0CBEQjRxqFwoTCPjA05bw7Y0DFQAAAAAdAAAAABAE',
+//       'https://upload.wikimedia.org/wikipedia/commons/thumb/a/a4/2019_Toyota_Corolla_Icon_Tech_VVT-i_Hybrid_1.8.jpg/960px-2019_Toyota_Corolla_Icon_Tech_VVT-i_Hybrid_1.8.jpg'
+//     ],
+//     modifications: JSON.stringify(['Performance Upgrade', 'Tinted Windows']),
+//     created_at: '2023-01-01T12:00:00Z'
+//   },
+//   {
+//     id: '2',
+//     uuid: '2',
+//     make: 'BMW',
+//     model: 'M3',
+//     year: 2020,
+//     engineSpecs: '3.0L Twin-Turbo I6',
+//     horsePower: 473,
+//     torque: '550 Nm',
+//     zeroToHundred: '4.1s',
+//     story: 'A sporty sedan with a legacy of performance and driving pleasure.',
+//     photo_urls: [
+//       'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQcK8LuTRihbc5t5dlS6Lw6Q710u02oN80LJw&s'
+//     ],
+//     modifications: JSON.stringify(['Carbon Fiber Spoiler']),
+//     created_at: '2022-06-15T09:30:00Z'
+//   }
+// ];
 
 export function CarComponent({ setComponent }: { setComponent: (value: string | null) => void }) {
   const { translations } = useLanguage();
@@ -147,17 +147,17 @@ export function CarComponent({ setComponent }: { setComponent: (value: string | 
       try {
         setIsLoading(true);
         // Simulate backend delay
-        await new Promise(res => setTimeout(res, 500));
+        // await new Promise(res => setTimeout(res, 500));
         // Use mock data
-        setCars(MOCK_VEHICLES);
+        // setCars(MOCK_VEHICLES);
         // If you want to use backend, comment above and uncomment below:
-        // const vehicleData = await httpClient.getVehicleData();
-        // const transformedData: VehicleDetails[] = vehicleData.map(vehicle => ({
-        //   ...vehicle,
-        //   id: vehicle.id.toString(),
-        //   modifications: vehicle.modifications || ''
-        // }));
-        // setCars(transformedData);
+        const vehicleData = await httpClient.getVehicleData();
+        const transformedData: VehicleDetails[] = vehicleData.map(vehicle => ({
+          ...vehicle,
+          id: vehicle.id.toString(),
+          modifications: vehicle.modifications || ''
+        }));
+        setCars(transformedData);
       } catch (error) {
         console.error('Error fetching vehicle data:', error);
       } finally {
@@ -280,8 +280,8 @@ export function CarComponent({ setComponent }: { setComponent: (value: string | 
 
     const image = await Camera.getPhoto({
       quality: 100,
-      width: 400,
-      height: 300,
+      width: 300,
+      height: 400,
       allowEditing: false,
       resultType: CameraResultType.Uri,
     });
@@ -297,8 +297,8 @@ export function CarComponent({ setComponent }: { setComponent: (value: string | 
     setShowPhotoModal(false);
 
     const { photos } = await Camera.pickImages({
-      width: 400,
-      height: 300,
+      width: 300,
+      height: 400,
       quality: 100
     });
 

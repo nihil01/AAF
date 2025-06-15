@@ -15,6 +15,7 @@ import { useLanguage } from '../../context/LanguageContext';
 import { darkMapStyle } from '../../theme/mapStyles';
 import { CustomLoaderComponent } from '../loader/CustomLoaderComponent';
 import { useIonAlert } from "@ionic/react";
+import { NativeAudio } from "@capacitor-community/native-audio";
 
 const BackgroundGeolocation: BackgroundGeolocationPlugin = registerPlugin("BackgroundGeolocation");
 
@@ -68,6 +69,68 @@ export const GoogleMapPage: React.FC<GoogleMapPageProps> = ({ mapClicked, onMapC
     const markerRef = useRef<MarkerData | null>(null);
     const [presentAlert] = useIonAlert();
 
+    // Add state for audio loading
+    const [isAudioLoaded, setIsAudioLoaded] = useState(false);
+
+    // Preload audio files
+    useEffect(() => {
+        const preloadAudio = async () => {
+            try {
+                await NativeAudio.preload({
+                    assetId: 'check',
+                    assetPath: 'assets/check.mp3',
+                    audioChannelNum: 1,
+                    isUrl: false
+                });
+
+                await NativeAudio.preload({
+                    assetId: 'uncheck',
+                    assetPath: 'assets/uncheck.mp3',
+                    audioChannelNum: 1,
+                    isUrl: false
+                });
+
+                setIsAudioLoaded(true);
+            } catch (error) {
+                console.error('Error preloading audio:', error);
+            }
+        };
+
+        preloadAudio();
+
+        // Cleanup audio resources
+        return () => {
+            NativeAudio.unload({ assetId: 'check' });
+            NativeAudio.unload({ assetId: 'uncheck' });
+        };
+    }, []);
+
+    async function playUnCheckSound() {
+        if (!isAudioLoaded) return;
+        
+        try {
+            await NativeAudio.play({
+                assetId: 'uncheck',
+                time: 0
+            });
+        } catch (error) {
+            console.error('Error playing uncheck sound:', error);
+        }
+    }
+
+    async function playCheckSound() {
+        if (!isAudioLoaded) return;
+        
+        try {
+            await NativeAudio.play({
+                assetId: 'check',
+                time: 0
+            });
+        } catch (error) {
+            console.error('Error playing check sound:', error);
+        }
+    }
+
     const handleLocationUpdate = async (
         latitude: number,
         longitude: number,
@@ -101,6 +164,7 @@ export const GoogleMapPage: React.FC<GoogleMapPageProps> = ({ mapClicked, onMapC
 
     const toggleLocationTracking = async (checked: boolean) => {
         if (checked) {
+            await playCheckSound();
             initialize();
             setMessageCallback(handleLocationUpdate);
 
@@ -134,6 +198,7 @@ export const GoogleMapPage: React.FC<GoogleMapPageProps> = ({ mapClicked, onMapC
             );
             watcherId.current = id;
         } else {
+            await playUnCheckSound();
             destroy();
 
             if (watcherId.current) {
@@ -379,7 +444,7 @@ export const GoogleMapPage: React.FC<GoogleMapPageProps> = ({ mapClicked, onMapC
 
                 {isMapLoading && (
                     <div className="map-loading-overlay">
-                        <CustomLoaderComponent />
+                        <CustomLoaderComponent showOverlay={true} />
                     </div>
                 )}
 
