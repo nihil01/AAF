@@ -32,6 +32,7 @@ import type {CustomNotificationWrapper} from "./notification/CustomNotificationW
 import {HomePage} from "./components/home/HomePageComponent.tsx";
 import { ThemeProvider } from './context/ThemeContext.tsx';
 import { LanguageProvider } from './context/LanguageContext.tsx';
+import ChatComponent from './components/chat/ChatComponent';
 
 const AppContent: React.FC = () => {
     const [tokenPresented, setTokenPresented] = useState(true);
@@ -119,7 +120,7 @@ const AppContent: React.FC = () => {
         const token = await SharedPreferences.getToken('refresh');
         if (!token) {
             //TODO: Remove this; DEBUG
-            setTokenPresented(false);
+            setTokenPresented(true);
             return;
         }
 
@@ -235,6 +236,10 @@ const AppContent: React.FC = () => {
                     </IonTabBar>
                 )}
             </IonTabs>
+            {/* Add ChatComponent for demo */}
+            <div style={{ marginTop: 32, display: 'flex', justifyContent: 'center' }}>
+                <ChatComponent />
+            </div>
         </IonApp>
     );
 };

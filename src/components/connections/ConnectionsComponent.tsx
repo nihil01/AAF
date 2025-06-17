@@ -27,7 +27,16 @@ export const ConnectionsPage = () => {
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const response: FriendsStruct = await new HttpClient().getFriends();
+                // const response: FriendsStruct = await new HttpClient().getFriends();
+                const response: FriendsStruct = {
+                    friends: [
+                        {
+                            username: "test",
+                            registered: new Date().getTime(),
+                        }
+                    ],  
+                    friendsAwaiting: []
+                };
                 setFriendsData(response);
             } catch (error) {
                 console.error('Error fetching data:', error);
