@@ -33,7 +33,7 @@ public Mono<String> uploadFileToS3(InputStream is) {
                         400, 500, BufferedImage.TYPE_INT_RGB);
 
                 Graphics2D graphics2D = reservedBuffer.createGraphics();
-                graphics2D.drawImage(incomingImage, 0, 0, 300, 400, null);
+                graphics2D.drawImage(incomingImage, 0, 0, 400, 500, null);
                 graphics2D.dispose();
 
                 ByteArrayOutputStream baos = new java.io.ByteArrayOutputStream();

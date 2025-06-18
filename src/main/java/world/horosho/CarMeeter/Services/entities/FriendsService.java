@@ -60,7 +60,10 @@ public class FriendsService {
 
     public Mono<ResponseEntity<FriendsStruct>> getFriends(String uuid) {
         return redisService.getFriendshipAwaiting(uuid)
-            .flatMap(userRepository::findByUsername)
+            .flatMap(s -> {
+                System.out.println("Friendship awaiting: " + s);
+                return userRepository.findByUsername(s);
+            })
             .collectList()
             .zipWith(friendsRepository.findFriendship(uuid).collectList())
             .map(tuple -> {
@@ -69,7 +72,7 @@ public class FriendsService {
             })
             .doOnSuccess(resp -> System.out.println("Friends retrieved: " + resp.getBody()))
             .onErrorResume(e -> {
-                e.printStackTrace();
+                System.err.println(e.getMessage());
                 return Mono.just(ResponseEntity.ok(new FriendsStruct(List.of(), List.of())));
             });
     }

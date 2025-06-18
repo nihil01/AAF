@@ -55,7 +55,7 @@ public class FriendsController {
     ){
 
         System.out.println(principal.getUsername());
-        return friendsService.getFriends(principal.getUsername());
+        return friendsService.getFriends(principal.getUsername()).doOnSuccess(System.out::println);
     }
 
     @GetMapping(value = "/manageFriend")

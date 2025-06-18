@@ -16,6 +16,7 @@ import java.time.Instant;
 @ToString
 
 public class Friend {
+    private long id;
     private String username;
     private Instant registered;
 }

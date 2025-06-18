@@ -1,4 +1,4 @@
-package world.horosho.CarMeeter.sockets;
+package world.horosho.CarMeeter.sockets.trivial;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.stereotype.Component;

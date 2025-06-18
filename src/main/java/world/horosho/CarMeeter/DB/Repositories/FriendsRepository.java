@@ -11,11 +11,11 @@ public interface FriendsRepository extends ReactiveCrudRepository<Friends, Long>
 
     //1.
     @Query("""
-            SELECT u.username, u.registered
+            SELECT u.id, u.username, u.registered
             FROM users u
             JOIN friends f ON u.username = f.friend_name AND f.user_name = :name
             UNION
-            SELECT u.username, u.registered
+            SELECT u.id, u.username, u.registered
             FROM users u
             JOIN friends f ON u.username = f.user_name AND f.friend_name = :name;
             
