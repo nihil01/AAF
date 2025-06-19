@@ -3,6 +3,8 @@ import App from './App.tsx';
 import {IonApp, setupIonicReact} from '@ionic/react';
 import { IonReactRouter } from '@ionic/react-router'; // Fixed import
 import { ThemeProvider } from './context/ThemeContext.tsx';
+import './index.css';
+import './utilities/EncryptionTestHelper.ts'; // Import for global access
 
 import '@ionic/react/css/core.css';
 import '@ionic/react/css/normalize.css';
@@ -14,8 +16,6 @@ import '@ionic/react/css/text-alignment.css';
 import '@ionic/react/css/text-transformation.css';
 import '@ionic/react/css/flex-utils.css';
 import '@ionic/react/css/display.css';
-
-import './index.css';
 
 setupIonicReact();
 

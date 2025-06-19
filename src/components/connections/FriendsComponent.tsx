@@ -17,7 +17,9 @@ import ChatComponent from '../chat/ChatComponent.tsx';
 export const FriendsPage = ({ friends }: { friends: FriendsStruct }) => {
     const [searchText, setSearchText] = useState('');
     const [filteredFriends, setFilteredFriends] = useState<AvailableUser[]>([]);
-    const [openChatUser, setOpenChatUser] = useState<string | null>(null);
+
+    const [friendUsername, setFriendUsername] = useState<string | null>(null);
+    const [friendID, setFriendID] = useState<number | null>(null);
 
     const timeoutRef = useRef<NodeJS.Timeout>(null);
     const [presentAlert] = useIonAlert();
@@ -103,7 +105,10 @@ export const FriendsPage = ({ friends }: { friends: FriendsStruct }) => {
                 <h2>{friend.username}</h2>
                 <p>{new Date(friend.registered).toISOString().slice(0, 10)}</p>
             </IonLabel>
-            <IonButton slot="end" color="primary" onClick={() => setOpenChatUser(friend.username)}>
+            <IonButton slot="end" color="primary" onClick={() => {
+                setFriendUsername(friend.username);
+                setFriendID(friend.id);
+            }}>
                 <IonIcon icon={chatbox} />
             </IonButton>
             <IonButton slot="end" color="danger" onClick={() => removeFriend(friend.username)}>
@@ -153,13 +158,13 @@ export const FriendsPage = ({ friends }: { friends: FriendsStruct }) => {
                         : filteredFriends.map(renderFriend)
                     : "No friends"}
             </IonList>
-            {openChatUser && (
+            {friendUsername && (
                 <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', background: 'rgba(0,0,0,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
                     <div style={{ position: 'relative', background: '#fff', borderRadius: 12, boxShadow: '0 2px 8px rgba(0,0,0,0.15)' }}>
                         <IonButton style={{ position: 'absolute', top: 8, right: 8, zIndex: 10 }} fill="clear" color="medium" onClick={() => setOpenChatUser(null)}>
                             <IonIcon icon={close} />
                         </IonButton>
-                        <ChatComponent userName={openChatUser} />
+                        <ChatComponent userName={friendUsername} userID={friendID}/>
                     </div>
                 </div>
             )}

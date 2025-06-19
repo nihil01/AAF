@@ -11,6 +11,7 @@ import {
 import {Route, Redirect, Switch} from 'react-router-dom';
 import {home, person, map, compass} from 'ionicons/icons';
 import { SharedPreferences } from "./utilities/SharedPreferences.ts";
+import { MockDataInitializer } from "./utilities/MockDataInitializer.ts";
 import { useEffect, useState } from "react";
 import Auth from "./components/auth/AuthComponent.tsx";
 import {GoogleMapPage} from "./components/googleMap/GoogleMapComponent.tsx";
@@ -32,7 +33,6 @@ import type {CustomNotificationWrapper} from "./notification/CustomNotificationW
 import {HomePage} from "./components/home/HomePageComponent.tsx";
 import { ThemeProvider } from './context/ThemeContext.tsx';
 import { LanguageProvider } from './context/LanguageContext.tsx';
-import ChatComponent from './components/chat/ChatComponent';
 
 const AppContent: React.FC = () => {
     const [tokenPresented, setTokenPresented] = useState(true);
@@ -119,6 +119,13 @@ const AppContent: React.FC = () => {
     const initPushNotifications = async () => {
         const token = await SharedPreferences.getToken('refresh');
         if (!token) {
+            // Initialize mock user data for testing
+            const mockUser = await MockDataInitializer.initializeMockUser();
+            if (!mockUser) {
+                console.log("Mock user initialization cancelled or failed");
+                return;
+            }
+
             //TODO: Remove this; DEBUG
             setTokenPresented(true);
             return;
@@ -236,10 +243,6 @@ const AppContent: React.FC = () => {
                     </IonTabBar>
                 )}
             </IonTabs>
-            {/* Add ChatComponent for demo */}
-            <div style={{ marginTop: 32, display: 'flex', justifyContent: 'center' }}>
-                <ChatComponent />
-            </div>
         </IonApp>
     );
 };

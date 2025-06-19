@@ -27,16 +27,39 @@ export const ConnectionsPage = () => {
     useEffect(() => {
         const fetchData = async () => {
             try {
+                const choose = prompt("Choose a number 0/1");
+
+                if(!Number.isInteger(parseInt(choose ?? "0"))) {
+                    return;
+                }
+
                 // const response: FriendsStruct = await new HttpClient().getFriends();
-                const response: FriendsStruct = {
+                const variants: FriendsStruct[] = [
+                    {
                     friends: [
                         {
-                            username: "test",
+                            id: 1,
+                            username: "orxan",
+                            registered: new Date().getTime() - 220000,
+                        }
+                    ],  
+                    friendsAwaiting: []
+                },
+                {
+                    friends: [
+                        {
+                            id: 2,
+                            username: "elman",
                             registered: new Date().getTime(),
                         }
                     ],  
                     friendsAwaiting: []
-                };
+                }
+            ];
+
+
+                const response = variants[Number(choose)];
+                alert(response.friends.at(0)?.username + " " + response.friends.at(0)?.id);
                 setFriendsData(response);
             } catch (error) {
                 console.error('Error fetching data:', error);

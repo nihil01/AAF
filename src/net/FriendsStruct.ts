@@ -1,18 +1,13 @@
 export interface FriendsStruct {
 
-    friendsAwaiting: {
-        username: string,
-        registered: number
-    }[],
+    friendsAwaiting: AvailableUser[],
 
-    friends: {
-        username: string,
-        registered: number
-    }[]
+    friends: AvailableUser[]
 
 }
 
 export interface AvailableUser{
+    id: number,
     username: string,
     registered: number
 }
