@@ -30,9 +30,9 @@ public class AuthController {
     private final JwtService jwtService;
     private final ApiClient apiClient;
 
-    @PostMapping(value = "/authenticate", consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
+    @PostMapping(value = "/authenticate")
     public Mono<ResponseEntity<UserResponse>> auth(
-            @Valid @ModelAttribute User user, ServerWebExchange exchange
+            @Valid @RequestBody User user, ServerWebExchange exchange
     ) {
         InetSocketAddress address = exchange.getRequest().getRemoteAddress();
         String ipAddress = address != null ? address.getHostString() : "IP_ADDRESS_UNDEFINED";

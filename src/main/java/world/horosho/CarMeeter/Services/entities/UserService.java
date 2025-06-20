@@ -56,38 +56,51 @@ public class UserService implements UserUtilities {
                         .flatMap(aBoolean -> {
                             System.out.println("user not found!");
                             if (aBoolean) {
+                                return this.normalizeUserName(user.getUsername())
+                                        .flatMap(s1 -> {
+                                            user.setUsername(s1);
+                                            user.setPassword(passwordEncoder.encode(user.getPassword()));
+                                            return Mono.just(user);
+                                        })
+                                        .flatMap(userRepository::save)
+                                        .onErrorResume(e -> {
+                                            System.err.println("SQL Error during user save: " + e.getMessage());
+                                            return Mono.empty();
+                                        })
+                                        .flatMap(savedUser -> userRepository.findByEmail(savedUser.getEmail())
+                                                .flatMap(this::mapToUserResponse));
                                 //* check for otp status
-                                return redisService.getEmailCodeRegistrationPending(user.getEmail()).flatMap(s -> {
-                                    System.out.println("otp status: " + s);
-                                    System.out.println("user provided otp " + user.getCode());
-                                    //* approve user registration
-                                    if (s.equals(user.getCode())) {
-
-                                        user.setPassword(passwordEncoder.encode(user.getPassword()));
-
-                                        return this.normalizeUserName(user.getUsername())
-                                                .flatMap(s1 -> {
-                                                    user.setUsername(s1);
-                                                    return Mono.just(user);
-                                                })
-                                                .flatMap(userRepository::save)
-                                                .onErrorResume(e -> {
-                                                    System.err.println("SQL Error during user save: " + e.getMessage());
-                                                    return Mono.empty();
-                                                })
-                                                .flatMap(savedUser -> userRepository.findByEmail(savedUser.getEmail())
-                                                        .flatMap(this::mapToUserResponse));
-
-                                        } else {
-                                            System.out.println("Not equals !!");
-                                            //* handle invalid code
-                                            return Mono.just(new UserResponse(0, "", "",
-                                                    Instant.now().toString(), false));
-                                        }
-                                    })
-                                    .switchIfEmpty(Mono.defer(() -> mailService.sendEmail(new MailRequest(user.getUsername(), user.getEmail(),
-                                            "", user.getIpAddress(), "CONFIRM_EMAIL"))
-                                    ));
+//                                return redisService.getEmailCodeRegistrationPending(user.getEmail()).flatMap(s -> {
+//                                    System.out.println("otp status: " + s);
+//                                    System.out.println("user provided otp " + user.getCode());
+//                                    //* approve user registration
+//                                    if (s.equals(user.getCode())) {
+//
+//                                        user.setPassword(passwordEncoder.encode(user.getPassword()));
+//
+//                                        return this.normalizeUserName(user.getUsername())
+//                                                .flatMap(s1 -> {
+//                                                    user.setUsername(s1);
+//                                                    return Mono.just(user);
+//                                                })
+//                                                .flatMap(userRepository::save)
+//                                                .onErrorResume(e -> {
+//                                                    System.err.println("SQL Error during user save: " + e.getMessage());
+//                                                    return Mono.empty();
+//                                                })
+//                                                .flatMap(savedUser -> userRepository.findByEmail(savedUser.getEmail())
+//                                                        .flatMap(this::mapToUserResponse));
+//
+//                                        } else {
+//                                            System.out.println("Not equals !!");
+//                                            //* handle invalid code
+//                                            return Mono.just(new UserResponse(0, "", "",
+//                                                    Instant.now().toString(), false));
+//                                        }
+//                                    })
+//                                    .switchIfEmpty(Mono.defer(() -> mailService.sendEmail(new MailRequest(user.getUsername(), user.getEmail(),
+//                                            "", user.getIpAddress(), "CONFIRM_EMAIL"))
+//                                    ));
                             } else {
                                 //* invalid password length
                                 return Mono.just(new UserResponse(0, "", "", Instant.now().toString(),
@@ -101,6 +114,7 @@ public class UserService implements UserUtilities {
     public Mono<UserResponse> loginUser(User user) {
         return userRepository.findByEmail(user.getEmail())
                 .flatMap(existingUser -> {
+                    System.out.println(existingUser);
 
                     if (passwordEncoder.matches(user.getPassword(), existingUser.getPassword())) {
                         return mapToUserResponse(existingUser);

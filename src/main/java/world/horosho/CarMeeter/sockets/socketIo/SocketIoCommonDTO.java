@@ -14,5 +14,8 @@ public class SocketIoCommonDTO {
     private String message;
     private SocketEventTypes type;
     private String room;
-
+    private Long timestamp;
+    private String publicKey;
+    private int[] iv;
+    private String encryptedAESKey;
 }
