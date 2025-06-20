@@ -4,18 +4,19 @@ import type { MessageDTO } from "../../net/SocketIO";
 import "./ChatComponent.css";
 import { SharedPreferences } from "../../utilities/SharedPreferences";
 import { 
-  generateAndPublishKeyBundle, 
-  fetchRemoteKeyBundle, 
-  encryptMessage, 
-  decryptMessage,
-  hasLocalKeyData,
+  initializeRSAKeyPair, 
+  getPeerPublicKey, 
+  getCryptoKeyAsString,
+  sendEncryptedMessage,
+  receiveEncryptedMessage
 } from "../../utilities/Crypto";
 
-interface Message {
-  from: string;
-  to: string;
-  text: string;
-  timestamp: string;
+export interface Message {
+  from: number;
+  to: number;
+  message: string;
+  room: string;
+  timestamp?: string;
   type?: string;
   encrypted?: boolean;
 }
@@ -27,11 +28,48 @@ const ChatComponent: React.FC<{ userID: number | null; userName: string | null }
   const [room, setRoom] = useState("");
   const [currentUser, setCurrentUser] = useState(0);
   const [userDataLoaded, setUserDataLoaded] = useState(false);
-  const [encryptionReady, setEncryptionReady] = useState(false);
   const [remoteKeyBundle, setRemoteKeyBundle] = useState<any>(null);
+  const [peerPublicKey, setPeerPublicKey] = useState<CryptoKey | null>(null);
+  const [peerPublicKeyString, setPeerPublicKeyString] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
+  const initializeKeyBundle = async () => {
+    console.log("🔑 Initializing key bundle for userID:", userID);
+    try {
+      await initializeRSAKeyPair(userID ?? 0);
+      console.log("✅ Key bundle initialized successfully");
+    } catch (error) {
+      console.error("❌ Failed to initialize key bundle:", error);
+    }
+  }
+
+  const fetchPeerPublicKey = async () => {
+    console.log("🔍 Fetching peer public key for userID:", userID);
+    if (userID) {
+      try {
+        const publicKey = await getPeerPublicKey(userID.toString());
+        if (publicKey) {
+          setPeerPublicKey(publicKey);
+          console.log("✅ Peer public key fetched and set");
+          
+          // Convert CryptoKey to string
+          const publicKeyString = await getCryptoKeyAsString(publicKey);
+          setPeerPublicKeyString(publicKeyString);
+          
+          console.log("Peer public key as string:", publicKeyString);
+        } else {
+          console.log("⚠️ No peer public key found for user:", userID);
+        }
+      } catch (error) {
+        console.error("❌ Error fetching peer public key:", error);
+      }
+    } else {
+      console.log("⚠️ No userID provided for peer public key fetch");
+    }
+  }
+
   useEffect(() => {
+
     const initializeChat = async () => {
       try {
         console.log("=== ChatComponent Initialization ===");
@@ -59,9 +97,6 @@ const ChatComponent: React.FC<{ userID: number | null; userName: string | null }
         setUserDataLoaded(true);
         console.log("Current user set to:", userId);
         
-        // Initialize encryption
-        await initializeEncryption(userId);
-        
         // Only proceed if we have a valid user ID
         if (userId > 0) {
           console.log("Setting up room registration...");
@@ -69,7 +104,7 @@ const ChatComponent: React.FC<{ userID: number | null; userName: string | null }
           // Register for room - this should trigger room assignment from backend
           const roomRegistrationDto: MessageDTO = { 
             from: userId, 
-            to: userID, 
+            to: userID ?? 0, 
             message: "", 
             type: "ROOM_REGISTRATION", 
             room: "" 
@@ -99,16 +134,14 @@ const ChatComponent: React.FC<{ userID: number | null; userName: string | null }
             if (dto.message && dto.type === "PRIVATE_MESSAGE") {
               try {
                 // Try to decrypt the message
-                const decryptedMessage = await decryptMessage(
-                  dto.from.toString(),
-                  new Uint8Array(Buffer.from(dto.message, 'base64'))
-                );
-                
+                const decryptedMessage = await receiveEncryptedMessage(dto);
+                console.log("Decrypted message:", decryptedMessage);
                 setMessages(prev => [...prev, {
-                  from: dto.from.toString(),
+                  from: dto.from,
                   type: dto.type,
-                  to: dto.to?.toString() ?? "",
-                  text: decryptedMessage,
+                  to: dto.to ?? 0,
+                  message: decryptedMessage,
+                  room: dto.room ?? "",
                   timestamp: new Date().toLocaleTimeString(),
                   encrypted: true
                 }]);
@@ -116,10 +149,11 @@ const ChatComponent: React.FC<{ userID: number | null; userName: string | null }
                 console.error("Failed to decrypt message:", error);
                 // Show encrypted message as fallback
                 setMessages(prev => [...prev, {
-                  from: dto.from.toString(),
+                  from: dto.from,
                   type: dto.type,
-                  to: dto.to?.toString() ?? "",
-                  text: "[Encrypted Message]",
+                  to: dto.to ?? 0,
+                  message: "[Encrypted Message]",
+                  room: dto.room ?? "",
                   timestamp: new Date().toLocaleTimeString(),
                   encrypted: false
                 }]);
@@ -136,35 +170,8 @@ const ChatComponent: React.FC<{ userID: number | null; userName: string | null }
       }
     };
 
-    const initializeEncryption = async (userId: number) => {
-      try {
-        console.log("Initializing encryption...");
-        
-        // Check if we have local key data
-        const hasKeys = await hasLocalKeyData();
-        if (!hasKeys) {
-          console.log("No local keys found, generating key bundle...");
-          await generateAndPublishKeyBundle(userId.toString());
-        }
-        
-        // Fetch remote user's key bundle
-        if (userID) {
-          try {
-            const bundle = await fetchRemoteKeyBundle(userID.toString());
-            setRemoteKeyBundle(bundle);
-            console.log("Remote key bundle fetched:", bundle);
-          } catch (error) {
-            console.warn("Could not fetch remote key bundle:", error);
-          }
-        }
-        
-        setEncryptionReady(true);
-        console.log("Encryption initialized successfully");
-      } catch (error) {
-        console.error("Error initializing encryption:", error);
-      }
-    };
-
+    initializeKeyBundle();
+    fetchPeerPublicKey();
     initializeChat();
 
     // Listen for connect/disconnect
@@ -208,19 +215,38 @@ const ChatComponent: React.FC<{ userID: number | null; userName: string | null }
       let encryptedMessage = input;
       
       // Encrypt the message if encryption is ready and we have remote key bundle
-      if (encryptionReady && remoteKeyBundle && userID) {
+      if (peerPublicKey && userID) {
         try {
-          const encrypted = await encryptMessage(remoteKeyBundle, userID.toString(), input);
-          encryptedMessage = Buffer.from(encrypted).toString('base64');
+          console.log("🔐 Starting encryption process...");
+          console.log("Peer public key exists:", !!peerPublicKey);
+          console.log("User ID:", userID);
+          
+          const dto: Message = {
+            from: currentUser,
+            to: userID,
+            message: input,
+            type: "PRIVATE_MESSAGE",
+            room: room
+          }
+
+          console.log("📤 Calling sendEncryptedMessage with DTO:", dto);
+          const encryptedData = await sendEncryptedMessage(dto, peerPublicKey);
+          console.log("✅ sendEncryptedMessage completed:", encryptedData);
+          
+          encryptedMessage = encryptedData.message; // Use the encrypted message from the returned DTO
           console.log("Message encrypted successfully");
         } catch (error) {
-          console.error("Encryption failed, sending plain text:", error);
+          console.error("❌ Encryption failed, sending plain text:", error);
         }
+      } else {
+        console.log("⚠️ Encryption skipped - conditions not met:");
+        console.log("  - peerPublicKey exists:", !!peerPublicKey);
+        console.log("  - userID:", userID);
       }
       
       const dto: MessageDTO = { 
         from: currentUser, 
-        to: userID, 
+        to: userID ?? 0, 
         message: encryptedMessage, 
         type: "PRIVATE_MESSAGE", 
         room: room 
@@ -229,11 +255,12 @@ const ChatComponent: React.FC<{ userID: number | null; userName: string | null }
       setMessages((prev) => [
         ...prev,
         {
-          from: currentUser.toString(),
-          to: userID?.toString() ?? "",
-          text: input, // Show original text to sender
+          from: currentUser,
+          to: userID ?? 0,
+          message: input, // Show original text to sender
           timestamp: new Date().toLocaleTimeString(),
-          encrypted: encryptionReady && remoteKeyBundle
+          room: room,
+          encrypted: !!(peerPublicKey)
         },
       ]);
       
@@ -256,7 +283,7 @@ const ChatComponent: React.FC<{ userID: number | null; userName: string | null }
         <span>Chat with {userName}</span>
         <span className={connected ? "status connected" : "status disconnected"}>{connected ? "Connected" : "Disconnected"}</span>
         {room && <span className="room-info">Room: {room}</span>}
-        {encryptionReady && <span className="encryption-status">🔒 E2E</span>}
+        {peerPublicKey && <span className="encryption-status">🔒 E2E</span>}
       </div>
       
       {/* Debug info */}
@@ -265,15 +292,15 @@ const ChatComponent: React.FC<{ userID: number | null; userName: string | null }
         <div>Current User ID: {currentUser}</div>
         <div>Target User ID: {userID}</div>
         <div>Room: {room || 'Not assigned'}</div>
-        <div>Encryption: {encryptionReady ? 'Ready' : 'Initializing...'}</div>
-        <div>Remote Keys: {remoteKeyBundle ? 'Available' : 'Not available'}</div>
+        <div>Encryption: {peerPublicKey ? 'Ready' : 'Initializing...'}</div>
+        <div>Peer Public Key: {peerPublicKey ? 'Available' : 'Not available'}</div>
       </div>
       
       <div className="chat-messages">
         {messages.map((msg, idx) => (
-          <div key={idx} className={`chat-message ${msg.from === currentUser.toString() ? "me" : "other"}`}>
+          <div key={idx} className={`chat-message ${msg.from === currentUser ? "me" : "other"}`}>
             <span className="chat-text">
-              {msg.text}
+              {msg.message}
               {msg.encrypted && <span style={{ fontSize: '10px', color: '#666' }}> 🔒</span>}
             </span>
             <span className="chat-timestamp">{msg.timestamp}</span>

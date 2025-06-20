@@ -43,6 +43,7 @@ const AppContent: React.FC = () => {
     const { translations } = useLanguage();
     const httpClient = new HttpClient();
 
+    
     useEffect(() => {
         let appStateListener: any;
 
@@ -120,14 +121,9 @@ const AppContent: React.FC = () => {
         const token = await SharedPreferences.getToken('refresh');
         if (!token) {
             // Initialize mock user data for testing
-            const mockUser = await MockDataInitializer.initializeMockUser();
-            if (!mockUser) {
-                console.log("Mock user initialization cancelled or failed");
-                return;
-            }
-
+            
             //TODO: Remove this; DEBUG
-            setTokenPresented(true);
+            setTokenPresented(false);
             return;
         }
 

@@ -11,16 +11,18 @@ declare global {
 
 export interface MessageDTO {
     from: number,
-    to: number | null,
+    to: number,
     message: string,
     type: string,
     room: string,
     timestamp?: number,
     publicKey?: string,
+    iv?: number[],
+    encryptedAESKey?: string,
 }
 
 export const initializeSocket = () => {
-    socket = io("http://localhost:9090", {
+    socket = io("http://10.20.30.2:9090", {
         autoConnect: false
     });
 

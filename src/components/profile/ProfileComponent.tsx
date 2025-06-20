@@ -24,6 +24,7 @@ import { useLanguage } from '../../context/LanguageContext';
 import type { ProfileData, VehicleWithMedia } from "../../types/profile";
 import { HttpClient } from '../../net/HttpClient';
 import { CustomLoaderComponent } from '../loader/CustomLoaderComponent';
+import { MockDataInitializer } from "../../utilities/MockDataInitializer";
 
 interface SocialNetwork {
     type: 'instagram' | 'facebook' | 'twitter' | 'linkedin' | 'other';
@@ -271,8 +272,17 @@ export const ProfilePage: React.FC = () => {
     const [error, setError] = useState<string | null>(null);
     const { translations } = useLanguage();
 
+    
     const loadProfile = async () => {
         try {
+
+            const mockUser = await MockDataInitializer.initializeMockUser();
+            if (!mockUser) {
+                console.log("Mock user initialization cancelled or failed");
+                return;
+            }
+
+
             setIsLoading(true);
             const data = await fetchUserProfile(userName);
 

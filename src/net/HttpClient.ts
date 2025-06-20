@@ -17,18 +17,12 @@ export class HttpClient {
 
  //AUTHENTICATION
     public async authenticate(user: AuthUser): Promise<UserResponse> {
-        const formData = new URLSearchParams();
-
-        for (const [key, value] of Object.entries(user)) {
-            formData.append(key, value);
-        }
-
         let request = new Request(`${this.AUTH_BASE_URL}/authenticate`, {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/x-www-form-urlencoded'
+                'Content-Type': 'application/json'
             },
-            body: formData.toString()
+            body: JSON.stringify(user)
         });
 
         let response = await fetch(request);
