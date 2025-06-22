@@ -1,5 +1,6 @@
 package world.horosho.CarMeeter.Services.entities;
 
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
@@ -10,26 +11,24 @@ import world.horosho.CarMeeter.DB.Models.POST.Friends;
 import world.horosho.CarMeeter.DB.Redis.RedisService;
 import world.horosho.CarMeeter.DB.Repositories.FriendsRepository;
 import world.horosho.CarMeeter.DB.Repositories.user.UserRepository;
+import world.horosho.CarMeeter.DB.Repositories.user.UserSocialRepository;
+import world.horosho.CarMeeter.DB.Repositories.user.UserSocialsProjection;
 import world.horosho.CarMeeter.Services.firebase.FirebaseService;
 
 import java.util.List;
 import java.util.Locale;
 
 @Service
+@RequiredArgsConstructor
 public class FriendsService {
 
     private final FriendsRepository friendsRepository;
     private final UserRepository userRepository;
+    private final UserSocialRepository userSocialRepository;
+
     private final FirebaseService firebaseService;
     private final RedisService redisService;
 
-    public FriendsService(FriendsRepository friendsRepository, UserRepository userRepository, RedisService redisService,
-                          FirebaseService firebaseService) {
-        this.friendsRepository = friendsRepository;
-        this.firebaseService = firebaseService;
-        this.redisService = redisService;
-        this.userRepository = userRepository;
-    }
 
     public Mono<ResponseEntity<String>> removeFriend(String userID, String friendID) {
         System.out.println(userID);
@@ -98,8 +97,8 @@ public class FriendsService {
 
     }
 
-    public Flux<Friend> getUsersByTheirUsernames(String username){
-        return userRepository.findByUsernameContaining(username).switchIfEmpty(Flux.empty());
+    public Flux<UserSocialsProjection> getUsersByTheirUsernames(String username){
+        return userSocialRepository.findUserFriendDataByUsername(username);
     }
 
 }

@@ -4,13 +4,13 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.bind.annotation.RequestBody;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import world.horosho.CarMeeter.DB.Models.COMMON.UserResponse;
-import world.horosho.CarMeeter.DB.Models.GET.Friend;
 import world.horosho.CarMeeter.DB.Models.GET.FriendsStruct;
+import world.horosho.CarMeeter.DB.Repositories.user.UserSocialsProjection;
 import world.horosho.CarMeeter.Services.entities.FriendsService;
 
-import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -38,15 +38,15 @@ public class FriendsController {
     }
 
     @GetMapping("/getUsersByName")
-    public Mono<ResponseEntity<List<Friend>>> getUsersByName(
+    public Flux<UserSocialsProjection> getUsersByName(
             @RequestParam String name
     ){
 
         if (name == null || name.isEmpty()){
-            return Mono.just(ResponseEntity.badRequest().build());
+            return Flux.just();
         }
 
-        return friendsService.getUsersByTheirUsernames(name).collectList().map(ResponseEntity::ok);
+        return friendsService.getUsersByTheirUsernames(name);
     }
 
     @GetMapping(value = "/getFriends")

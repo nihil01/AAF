@@ -8,7 +8,6 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @Data
 public class KeyBundleDTO {
-    private Long userId;
     private String publicKey;
 }
 

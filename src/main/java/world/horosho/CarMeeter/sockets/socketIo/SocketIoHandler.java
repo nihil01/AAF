@@ -15,7 +15,6 @@ public class SocketIoHandler {
 
     private final SocketIOServer socketIOServer;
     private final ConcurrentHashMap<String, List<String>> userRooms;
-    private final ConcurrentHashMap<Long, KeyBundleDTO> signalKeys;
 
     public void startServer() {
         try {
@@ -86,28 +85,28 @@ public class SocketIoHandler {
         });
 
         socketIOServer.addEventListener("private_message", SocketIoCommonDTO.class,
-            (socketIOClient, socketIoCommonDTO, ackRequest) -> {
+        (socketIOClient, socketIoCommonDTO, ackRequest) -> {
 
-                if (socketIoCommonDTO.getRoom() == null || socketIoCommonDTO.getRoom().isEmpty()) {
-                    socketIOClient.sendEvent("private_message", "BLANK_ROOM");
-                    System.out.println("Message sent to the room");
-                    return;
+            if (socketIoCommonDTO.getRoom() == null || socketIoCommonDTO.getRoom().isEmpty()) {
+                socketIOClient.sendEvent("private_message", "BLANK_ROOM");
+                System.out.println("Message sent to the room");
+                return;
+            }
+
+            System.out.println("Message sent from client " + socketIOClient.getSessionId().toString());
+
+            socketIOServer.getRoomOperations(socketIoCommonDTO.getRoom()).getClients().forEach(roomClient -> {
+                System.out.println("Client in tha room: " + roomClient.getSessionId().toString());
+                if (!roomClient.getSessionId().toString().equalsIgnoreCase(socketIOClient.getSessionId().toString()) ) {
+
+                    roomClient.sendEvent("private_message_received", socketIoCommonDTO);
+                    System.out.println("messaj");
+                    System.out.println("Message sent to the room " + socketIoCommonDTO.getMessage() +
+                            " to client " + roomClient.getSessionId().toString());
                 }
 
-                System.out.println("Message sent from client " + socketIOClient.getSessionId().toString());
-
-                socketIOServer.getRoomOperations(socketIoCommonDTO.getRoom()).getClients().forEach(roomClient -> {
-                    System.out.println("Client in tha room: " + roomClient.getSessionId().toString());
-                    if (!roomClient.getSessionId().toString().equalsIgnoreCase(socketIOClient.getSessionId().toString()) ) {
-
-                        roomClient.sendEvent("private_message_received", socketIoCommonDTO);
-                        System.out.println("messaj");
-                        System.out.println("Message sent to the room " + socketIoCommonDTO.getMessage() +
-                                " to client " + roomClient.getSessionId().toString());
-                    }
-
-                });
             });
+        });
     }
 
 }

@@ -23,9 +23,4 @@ public class SocketIoConfig {
         return new ConcurrentHashMap<>();
     }
 
-    @Bean
-    public ConcurrentHashMap<Long, KeyBundleDTO> signalKeys() {
-        return new ConcurrentHashMap<>();
-    }
-
 }
