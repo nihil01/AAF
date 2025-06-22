@@ -17,7 +17,7 @@ async function generateRSAKeyPair() {
     );
   }
 
-  export async function initializeRSAKeyPair(userId: number): Promise<{
+  export async function initializeRSAKeyPair(): Promise<{
     publicKey: string;
     privateKey: string;
     success: boolean;
@@ -31,6 +31,12 @@ async function generateRSAKeyPair() {
       ]);
       
       if (privateKey && publicKey) {
+
+        console.log("Retrieved keys from storage");
+
+        console.log("Private key:", privateKey);
+        console.log("Public key:", publicKey);
+        
         // 2. Validate existing keys
         const areKeysValid = await validateExistingKeys();
         
@@ -62,29 +68,11 @@ async function generateRSAKeyPair() {
 
       // 5. Save private key to shared preferences
       await SharedPreferences.set('private_key', privateKeyString);
+      await SharedPreferences.set('public_key', publicKeyString);
+
       console.log('✅ Private key saved to shared preferences');
 
-      const token = await SharedPreferences.get('access_token');
-
-      // 6. Send public key to backend
-      const response = await fetch(`http://10.20.30.2:8080/api/v1/keys/publish`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          userId: userId,
-          publicKey: publicKeyString
-        })
-      });
-
-      if (!response.ok) {
-        throw new Error(`Failed to save public key to backend: ${response.status}`);
-      }
-
-      console.log('✅ Public key sent to backend successfully');
-      await SharedPreferences.set('public_key', publicKeyString);
+      await sharePublicKey();
 
       return {
         publicKey: publicKeyString,
@@ -98,6 +86,47 @@ async function generateRSAKeyPair() {
     }
   }
   
+
+  async function sharePublicKey() {
+    try {
+      const publicKey = await getPublicKeyFromStorage();
+
+      if (!publicKey) {
+        throw new Error('Public key not found in storage. Please initialize keys first.');
+      }
+
+      const token = await SharedPreferences.get('access_token');
+      
+      // Check if user is authenticated
+      if (!token) {
+        console.log('⚠️ User not authenticated, skipping public key sharing');
+        return; // Don't throw error, just skip sharing
+      }
+
+      console.log('📤 Sharing public key with server...');
+      const response = await fetch(`http://10.20.30.2:8080/api/v1/keys/publish`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json', 
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          publicKey: publicKey
+        })
+      });
+
+      if (!response.ok) {
+        console.error(`❌ Failed to share public key: ${response.status} ${response.statusText}`);
+        // Don't throw error, just log it - key generation can still succeed
+        return;
+      }
+
+      console.log('✅ Public key shared successfully');
+    } catch (error) {
+      console.error('❌ Error sharing public key:', error);
+      // Don't throw error, just log it - key generation can still succeed
+    }
+  }
 
   // Helper function to get private key from shared preferences
   async function getPrivateKeyFromStorage(): Promise<string | null> {
@@ -235,6 +264,7 @@ async function generateRSAKeyPair() {
       key,
       binary
     );
+
     return new TextDecoder().decode(decrypted);
   }
   
@@ -277,19 +307,38 @@ async function generateRSAKeyPair() {
   }
 
   export async function getPeerPublicKey(userId: string) {
-    // 1. Получаем публичный ключ получателя (с твоего backend API или сокетом)
-    const token = await SharedPreferences.get('access_token');
-    const response = await fetch(`http://10.20.30.2:8080/api/v1/keys/fetch/${userId}`, {
-      headers: {
-        'Authorization': `Bearer ${token}`
+    try {
+      // 1. Получаем публичный ключ получателя (с твоего backend API или сокетом)
+      const token = await SharedPreferences.get('access_token');
+      
+      if (!token) {
+        console.log('⚠️ No access token available for fetching peer public key');
+        return null;
       }
-    });
-    const { publicKey: publicKeyPem } = await response.json();
-    console.log("Public key fetched:", publicKeyPem);
-    if (publicKeyPem) {
-      return await importPublicKey(publicKeyPem);
+      
+      const response = await fetch(`http://10.20.30.2:8080/api/v1/keys/fetch/${userId}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      if (!response.ok) {
+        console.error(`❌ Failed to fetch peer public key: ${response.status} ${response.statusText}`);
+        return null;
+      }
+      
+      const key = await response.text();
+      console.log("Public key fetched:", key);
+      
+      if (key) {
+        return await importPublicKey(key);
+      }
+      
+      return null;
+    } catch (error) {
+      console.error('❌ Error fetching peer public key:', error);
+      return null;
     }
-    return null;
   }
 
   export const getCryptoKeyAsString = async (cryptoKey: CryptoKey, isPrivate: boolean = false): Promise<string> => {
@@ -346,7 +395,6 @@ async function generateRSAKeyPair() {
         message: ciphertext,
         type: dto.type ?? "PRIVATE_MESSAGE",
         room: dto.room ?? "",
-        timestamp: Date.now(),
         iv: Array.from(iv),
         encryptedAESKey: encryptedAESKey,
       };
@@ -364,6 +412,15 @@ async function generateRSAKeyPair() {
     encryptedData: MessageDTO
   ): Promise<string> {
     try {
+      // Validate required fields
+      if (!encryptedData.encryptedAESKey) {
+        throw new Error('Encrypted AES key is missing from message data');
+      }
+      
+      if (!encryptedData.iv) {
+        throw new Error('IV is missing from message data');
+      }
+      
       // 1. Get private key from shared preferences
       const privateKeyPem = await getPrivateKeyFromStorage();
       if (!privateKeyPem) {

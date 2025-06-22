@@ -80,11 +80,4 @@ export class SharedPreferences {
         return JSON.parse(theme);
     }
 
-
-    //Used for logout
-    public static async clearAll(): Promise<void> {
-        await Preferences.clear();
-    }
-    
-
 }

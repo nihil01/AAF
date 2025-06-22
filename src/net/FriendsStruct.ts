@@ -9,5 +9,6 @@ export interface FriendsStruct {
 export interface AvailableUser{
     id: number,
     username: string,
-    registered: number
+    registered: number,
+    avatar?: string
 }

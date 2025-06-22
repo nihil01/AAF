@@ -104,6 +104,8 @@ const Auth: React.FC = () => {
                     setErrorMessage("Unsuccessful registration !");
                     setShowErrorAlert(true);
                 }
+                console.log("Redirecting to home");
+                location.href = "/";
             });
             return;
         }
@@ -115,11 +117,12 @@ const Auth: React.FC = () => {
         }).then(r => {
             if (r.success) {
                 console.log("Logged in successfully");
-                window.location.href = "/";
+                location.href = "/";
             } else {
                 setErrorMessage("Unsuccessful login !");
                 setShowErrorAlert(true);
             }
+            console.log(" to home");
         });
     };
 

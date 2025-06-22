@@ -1,4 +1,5 @@
 import { io, Socket } from "socket.io-client";
+import type { Message } from "../components/chat/ChatComponent";
 
 let socket: Socket;
 
@@ -9,13 +10,7 @@ declare global {
     }
 }
 
-export interface MessageDTO {
-    from: number,
-    to: number,
-    message: string,
-    type: string,
-    room: string,
-    timestamp?: number,
+export interface MessageDTO extends Message {
     publicKey?: string,
     iv?: number[],
     encryptedAESKey?: string,

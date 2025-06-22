@@ -32,14 +32,15 @@ import {
   IonButtons,
   IonTitle,
   IonHeader,
-  IonPage,
-  IonBadge
+  IonPage
 } from '@ionic/react';
-import { add, settings, camera, image, arrowBack, create, trash } from 'ionicons/icons';
+
+import { add, settings, camera, image, arrowBack } from 'ionicons/icons';
 import './CarComponent.css';
 import { CustomLoaderComponent } from '../loader/CustomLoaderComponent';
 // import type { VehicleDetails } from '../../types/profile.ts';
 import { VehicleCard } from './VehicleCard.tsx';
+import { darkMapStyle } from '../../theme/mapStyles.ts';
 
 const formStyles = {
   item: {
@@ -88,83 +89,83 @@ const carFormSchema = z.object({
 type CarFormData = z.infer<typeof carFormSchema>;
 
 // Mock data for testing
-const MOCK_VEHICLES: VehicleWithMedia[] = [
-    {
-        uuid: "1",
-        id: 1,
-        make: "BMW",
-        model: "M3",
-        year: 2022,
-        engineSpecs: "3.0L Twin-Turbo I6",
-        horsePower: 473,
-        torque: "550 Nm",
-        zeroToHundred: "4.1s",
-        story: "A sporty sedan with a legacy of performance and driving pleasure. This M3 has been my dream car for years, and it's even better than I imagined. The handling is precise, the power delivery is smooth, and the sound is intoxicating.",
-        modifications: JSON.stringify([
-            "Carbon Fiber Spoiler",
-            "Performance Exhaust",
-            "Lowered Suspension",
-            "Stage 2 Tune",
-            "Forged Wheels"
-        ]),
-        created_at: "2024-01-15T10:30:00Z",
-        photo_urls: [
-            "https://images.unsplash.com/photo-1607853202273-797f1c22a38e?w=800&auto=format&fit=crop",
-            "https://images.unsplash.com/photo-1607853202273-797f1c22a38e?w=800&auto=format&fit=crop",
-            "https://images.unsplash.com/photo-1607853202273-797f1c22a38e?w=800&auto=format&fit=crop"
-        ]
-    },
-    {
-        uuid: "2",
-        id: 2,
-        make: "Porsche",
-        model: "911",
-        year: 2021,
-        engineSpecs: "3.0L Twin-Turbo Flat-6",
-        horsePower: 379,
-        torque: "450 Nm",
-        zeroToHundred: "4.2s",
-        story: "My weekend track warrior. This 911 has been modified for both street and track use. The balance and precision of this car is unmatched. Every drive is an event, and it never fails to put a smile on my face.",
-        modifications: JSON.stringify([
-            "Sport Suspension",
-            "Track Tires",
-            "Roll Cage",
-            "Carbon Ceramic Brakes",
-            "Custom ECU Tune"
-        ]),
-        created_at: "2024-01-15T10:30:00Z",
-        photo_urls: [
-            "https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=800&auto=format&fit=crop",
-            "https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=800&auto=format&fit=crop",
-            "https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=800&auto=format&fit=crop"
-        ]
-    },
-    {
-        uuid: "3",
-        id: 3,
-        make: "Mercedes-AMG",
-        model: "GT",
-        year: 2023,
-        engineSpecs: "4.0L Biturbo V8",
-        horsePower: 577,
-        torque: "700 Nm",
-        zeroToHundred: "3.2s",
-        story: "The perfect blend of luxury and performance. This AMG GT is my daily driver and weekend cruiser. The V8 soundtrack is incredible, and the interior quality is second to none.",
-        modifications: JSON.stringify([
-            "Performance Exhaust",
-            "Carbon Fiber Interior Trim",
-            "Custom Wheels",
-            "Lowering Springs",
-            "Stage 1 Tune"
-        ]),
-        created_at: "2024-01-15T10:30:00Z",
-        photo_urls: [
-            "https://images.unsplash.com/photo-1618843479313-40f8afb4b4d8?w=800&auto=format&fit=crop",
-            "https://images.unsplash.com/photo-1618843479313-40f8afb4b4d8?w=800&auto=format&fit=crop",
-            "https://images.unsplash.com/photo-1618843479313-40f8afb4b4d8?w=800&auto=format&fit=crop"
-        ]
-    }
-];
+// const MOCK_VEHICLES: VehicleWithMedia[] = [
+//     {
+//         uuid: "1",
+//         id: 1,
+//         make: "BMW",
+//         model: "M3",
+//         year: 2022,
+//         engineSpecs: "3.0L Twin-Turbo I6",
+//         horsePower: 473,
+//         torque: "550 Nm",
+//         zeroToHundred: "4.1s",
+//         story: "A sporty sedan with a legacy of performance and driving pleasure. This M3 has been my dream car for years, and it's even better than I imagined. The handling is precise, the power delivery is smooth, and the sound is intoxicating.",
+//         modifications: JSON.stringify([
+//             "Carbon Fiber Spoiler",
+//             "Performance Exhaust",
+//             "Lowered Suspension",
+//             "Stage 2 Tune",
+//             "Forged Wheels"
+//         ]),
+//         created_at: "2024-01-15T10:30:00Z",
+//         photo_urls: [
+//             "https://images.unsplash.com/photo-1607853202273-797f1c22a38e?w=800&auto=format&fit=crop",
+//             "https://images.unsplash.com/photo-1607853202273-797f1c22a38e?w=800&auto=format&fit=crop",
+//             "https://images.unsplash.com/photo-1607853202273-797f1c22a38e?w=800&auto=format&fit=crop"
+//         ]
+//     },
+//     {
+//         uuid: "2",
+//         id: 2,
+//         make: "Porsche",
+//         model: "911",
+//         year: 2021,
+//         engineSpecs: "3.0L Twin-Turbo Flat-6",
+//         horsePower: 379,
+//         torque: "450 Nm",
+//         zeroToHundred: "4.2s",
+//         story: "My weekend track warrior. This 911 has been modified for both street and track use. The balance and precision of this car is unmatched. Every drive is an event, and it never fails to put a smile on my face.",
+//         modifications: JSON.stringify([
+//             "Sport Suspension",
+//             "Track Tires",
+//             "Roll Cage",
+//             "Carbon Ceramic Brakes",
+//             "Custom ECU Tune"
+//         ]),
+//         created_at: "2024-01-15T10:30:00Z",
+//         photo_urls: [
+//             "https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=800&auto=format&fit=crop",
+//             "https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=800&auto=format&fit=crop",
+//             "https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=800&auto=format&fit=crop"
+//         ]
+//     },
+//     {
+//         uuid: "3",
+//         id: 3,
+//         make: "Mercedes-AMG",
+//         model: "GT",
+//         year: 2023,
+//         engineSpecs: "4.0L Biturbo V8",
+//         horsePower: 577,
+//         torque: "700 Nm",
+//         zeroToHundred: "3.2s",
+//         story: "The perfect blend of luxury and performance. This AMG GT is my daily driver and weekend cruiser. The V8 soundtrack is incredible, and the interior quality is second to none.",
+//         modifications: JSON.stringify([
+//             "Performance Exhaust",
+//             "Carbon Fiber Interior Trim",
+//             "Custom Wheels",
+//             "Lowering Springs",
+//             "Stage 1 Tune"
+//         ]),
+//         created_at: "2024-01-15T10:30:00Z",
+//         photo_urls: [
+//             "https://images.unsplash.com/photo-1618843479313-40f8afb4b4d8?w=800&auto=format&fit=crop",
+//             "https://images.unsplash.com/photo-1618843479313-40f8afb4b4d8?w=800&auto=format&fit=crop",
+//             "https://images.unsplash.com/photo-1618843479313-40f8afb4b4d8?w=800&auto=format&fit=crop"
+//         ]
+//     }
+// ];
 
 export function CarComponent({ setComponent }: { setComponent: (value: string | null) => void }) {
   const { translations } = useLanguage();
@@ -188,19 +189,18 @@ export function CarComponent({ setComponent }: { setComponent: (value: string | 
       try {
         setIsLoading(true);
         // Comment out real backend call
-        // const vehicleData = await httpClient.getVehicleData();
-        // const transformedData: VehicleDetails[] = vehicleData.map(vehicle => ({
-        //     ...vehicle,
-        //     id: vehicle.id.toString(),
-        //     modifications: vehicle.modifications || ''
-        // }));
-        // setCars(transformedData);
+        const vehicleData = await httpClient.getVehicleData();
+        const transformedData: VehicleWithMedia[] = vehicleData.map(vehicle => ({
+            ...vehicle,
+            modifications: vehicle.modifications || ''
+        }));
+        setCars(transformedData);
 
-        // Use mock data instead
-        console.log("Using mock vehicle data");
-        // Simulate network delay
-        await new Promise(resolve => setTimeout(resolve, 800));
-        setCars(MOCK_VEHICLES);
+        // // Use mock data instead
+        // console.log("Using mock vehicle data");
+        // // Simulate network delay
+        // await new Promise(resolve => setTimeout(resolve, 800));
+        // setCars(MOCK_VEHICLES);
       } catch (error) {
         console.error('Error fetching vehicle data:', error);
         presentToast({
@@ -248,35 +248,47 @@ export function CarComponent({ setComponent }: { setComponent: (value: string | 
       setIsSubmitting(true);
 
       // Comment out real backend submission
-      // const formData = new FormData();
+      const formData = new FormData();
+
+      formData.append('make', data.make);
+      formData.append('model', data.model);
+      formData.append('year', data.year.toString());
+      formData.append('engineSpecs', data.engineSpecs);
+      formData.append('horsePower', data.horsePower.toString());
+      formData.append('torque', data.torque);
+      formData.append('zeroToHundred', data.zeroToHundred);
+      formData.append('story', data.story);
+      formData.append('modifications', JSON.stringify(modifications));
+
+
       // ... existing formData code ...
-      // const response = await httpClient.submitVehicleData(formData);
+      const response = await httpClient.submitVehicleData(formData);
 
       // Mock submission
-      console.log("Using mock submission");
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // console.log("Using mock submission");
+      // await new Promise(resolve => setTimeout(resolve, 1000));
 
-      // Create mock response
-      const mockResponse: VehicleWithMedia = {
-        uuid: Date.now().toString(),
-        id: MOCK_VEHICLES.length + 1,
-        make: data.make,
-        model: data.model,
-        year: data.year,
-        engineSpecs: data.engineSpecs,
-        horsePower: data.horsePower,
-        torque: data.torque,
-        zeroToHundred: data.zeroToHundred,
-        story: data.story,
-        modifications: JSON.stringify(modifications),
-        created_at: new Date().toISOString(),
-        photo_urls: photos.length > 0 ? photos : [
-          "https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?w=800&auto=format&fit=crop"
-        ]
-      };
+      // // Create mock response
+      // const mockResponse: VehicleWithMedia = {
+      //   uuid: Date.now().toString(),
+      //   id: MOCK_VEHICLES.length + 1,
+      //   make: data.make,
+      //   model: data.model,
+      //   year: data.year,
+      //   engineSpecs: data.engineSpecs,
+      //   horsePower: data.horsePower,
+      //   torque: data.torque,
+      //   zeroToHundred: data.zeroToHundred,
+      //   story: data.story,
+      //   modifications: JSON.stringify(modifications),
+      //   created_at: new Date().toISOString(),
+      //   photo_urls: photos.length > 0 ? photos : [
+      //     "https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?w=800&auto=format&fit=crop"
+      //   ]
+      // };
 
       // Add to local state
-      setCars([...cars, mockResponse]);
+      setCars([...cars, response]);
       
       // Show success message
       presentToast({
@@ -356,11 +368,11 @@ export function CarComponent({ setComponent }: { setComponent: (value: string | 
   const handleDelete = async (carId: string) => {
     try {
       // Comment out real backend deletion
-      // await httpClient.deleteVehicle(carId);
+      await httpClient.deleteVehicle(carId);
       
       // Mock deletion
-      console.log("Using mock deletion");
-      await new Promise(resolve => setTimeout(resolve, 500));
+      // console.log("Using mock deletion");
+      // await new Promise(resolve => setTimeout(resolve, 500));
       
       setCars(cars.filter(car => car.uuid !== carId));
       presentToast({

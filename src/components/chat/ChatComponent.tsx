@@ -3,13 +3,16 @@ import { connectSocket, disconnectSocket, sendMessage, registerForRoom } from ".
 import type { MessageDTO } from "../../net/SocketIO";
 import "./ChatComponent.css";
 import { SharedPreferences } from "../../utilities/SharedPreferences";
-import { 
-  initializeRSAKeyPair, 
+import {  
   getPeerPublicKey, 
   getCryptoKeyAsString,
   sendEncryptedMessage,
   receiveEncryptedMessage
 } from "../../utilities/Crypto";
+import { IonIcon } from "@ionic/react";
+import { IonButton } from "@ionic/react";
+import { close } from "ionicons/icons";
+import { sqliteService } from "../../sqlite/sqlite";
 
 export interface Message {
   from: number;
@@ -18,31 +21,24 @@ export interface Message {
   room: string;
   timestamp?: string;
   type?: string;
-  encrypted?: boolean;
 }
 
-const ChatComponent: React.FC<{ userID: number | null; userName: string | null }> = ({ userID, userName }) => {
+const ChatComponent: React.FC<{ userID: number | null; userName: string | null,
+   setChatOpen: (chatOpen: boolean) => void }> = ({ userID, userName, setChatOpen }) => {
+
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [connected, setConnected] = useState(false);
   const [room, setRoom] = useState("");
   const [currentUser, setCurrentUser] = useState(0);
   const [userDataLoaded, setUserDataLoaded] = useState(false);
-  const [remoteKeyBundle, setRemoteKeyBundle] = useState<any>(null);
   const [peerPublicKey, setPeerPublicKey] = useState<CryptoKey | null>(null);
   const [peerPublicKeyString, setPeerPublicKeyString] = useState<string | null>(null);
+ 
+  
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
-  const initializeKeyBundle = async () => {
-    console.log("🔑 Initializing key bundle for userID:", userID);
-    try {
-      await initializeRSAKeyPair(userID ?? 0);
-      console.log("✅ Key bundle initialized successfully");
-    } catch (error) {
-      console.error("❌ Failed to initialize key bundle:", error);
-    }
-  }
-
+  
   const fetchPeerPublicKey = async () => {
     console.log("🔍 Fetching peer public key for userID:", userID);
     if (userID) {
@@ -59,6 +55,8 @@ const ChatComponent: React.FC<{ userID: number | null; userName: string | null }
           console.log("Peer public key as string:", publicKeyString);
         } else {
           console.log("⚠️ No peer public key found for user:", userID);
+          //close chat
+          setChatOpen(false);
         }
       } catch (error) {
         console.error("❌ Error fetching peer public key:", error);
@@ -75,7 +73,6 @@ const ChatComponent: React.FC<{ userID: number | null; userName: string | null }
         console.log("=== ChatComponent Initialization ===");
         console.log("Target userID:", userID);
         console.log("Target userName:", userName);
-        
         // Connect socket first
         connectSocket();
         setConnected(true);
@@ -96,7 +93,7 @@ const ChatComponent: React.FC<{ userID: number | null; userName: string | null }
         setCurrentUser(userId);
         setUserDataLoaded(true);
         console.log("Current user set to:", userId);
-        
+
         // Only proceed if we have a valid user ID
         if (userId > 0) {
           console.log("Setting up room registration...");
@@ -160,6 +157,8 @@ const ChatComponent: React.FC<{ userID: number | null; userName: string | null }
               }
             }
           });
+          //read user chat
+          readUserChat();
         } else {
           console.error("Invalid user ID:", userId);
           alert("Error: Invalid user ID. Please check mock data initialization.");
@@ -170,9 +169,9 @@ const ChatComponent: React.FC<{ userID: number | null; userName: string | null }
       }
     };
 
-    initializeKeyBundle();
     fetchPeerPublicKey();
     initializeChat();
+
 
     // Listen for connect/disconnect
     // @ts-ignore
@@ -180,6 +179,7 @@ const ChatComponent: React.FC<{ userID: number | null; userName: string | null }
       console.log("Socket connected");
       setConnected(true);
     });
+    
     // @ts-ignore
     window.socket?.on("disconnect", () => {
       console.log("Socket disconnected");
@@ -205,6 +205,28 @@ const ChatComponent: React.FC<{ userID: number | null; userName: string | null }
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
+  const readUserChat = async () => {
+    if(room != null && room != ""){
+      try {
+        const data = await sqliteService.getUserChat(room);
+        console.log("User chat data:", JSON.parse(data));
+
+        for(let i = 0; i < JSON.parse(data).length; i++){
+          //update in chatbox
+          setMessages(prev => [...prev, {
+            from: currentUser,
+            to: userID ?? 0,
+            message: JSON.parse(data)[i].message,
+            timestamp: new Date().toLocaleTimeString(),
+            room: room,
+          }]);
+        }
+      } catch (error) {
+        console.error("Error reading user chat:", error);
+      }
+    }    
+  }
+
   const handleSend = async () => {
     if (input.trim() === "" || !room) {
       alert("Cannot send message: " + (!room ? "No room assigned" : "Empty message"));
@@ -221,20 +243,38 @@ const ChatComponent: React.FC<{ userID: number | null; userName: string | null }
           console.log("Peer public key exists:", !!peerPublicKey);
           console.log("User ID:", userID);
           
-          const dto: Message = {
-            from: currentUser,
-            to: userID,
-            message: input,
-            type: "PRIVATE_MESSAGE",
-            room: room
-          }
+          const dto: Message = { 
+            from: currentUser, 
+            to: userID, 
+            message: encryptedMessage, 
+            type: "PRIVATE_MESSAGE", 
+            room: room 
+          };
 
           console.log("📤 Calling sendEncryptedMessage with DTO:", dto);
-          const encryptedData = await sendEncryptedMessage(dto, peerPublicKey);
+          const encryptedData: MessageDTO = await sendEncryptedMessage(dto, peerPublicKey);
           console.log("✅ sendEncryptedMessage completed:", encryptedData);
           
-          encryptedMessage = encryptedData.message; // Use the encrypted message from the returned DTO
           console.log("Message encrypted successfully");
+
+          
+          
+          setMessages((prev) => [
+            ...prev,
+            {
+              from: currentUser,
+              to: userID ?? 0,
+              message: input, // Show original text to sender
+              timestamp: new Date().toLocaleTimeString(),
+              room: room,
+              encrypted: !!(peerPublicKey)
+            },
+          ]);
+          
+          console.log("Sending message:", encryptedData);
+          sendMessage(encryptedData);
+          setInput("");
+
         } catch (error) {
           console.error("❌ Encryption failed, sending plain text:", error);
         }
@@ -244,29 +284,7 @@ const ChatComponent: React.FC<{ userID: number | null; userName: string | null }
         console.log("  - userID:", userID);
       }
       
-      const dto: MessageDTO = { 
-        from: currentUser, 
-        to: userID ?? 0, 
-        message: encryptedMessage, 
-        type: "PRIVATE_MESSAGE", 
-        room: room 
-      };
-      
-      setMessages((prev) => [
-        ...prev,
-        {
-          from: currentUser,
-          to: userID ?? 0,
-          message: input, // Show original text to sender
-          timestamp: new Date().toLocaleTimeString(),
-          room: room,
-          encrypted: !!(peerPublicKey)
-        },
-      ]);
-      
-      console.log("Sending message:", dto);
-      sendMessage(dto);
-      setInput("");
+  
     } catch (error) {
       console.error("Error sending message:", error);
       alert("Error sending message: " + error);
@@ -279,29 +297,19 @@ const ChatComponent: React.FC<{ userID: number | null; userName: string | null }
 
   return (
     <div className="chat-container">
-      <div className="chat-header">
+      <div className="chat-header d-flex flex-column">
         <span>Chat with {userName}</span>
-        <span className={connected ? "status connected" : "status disconnected"}>{connected ? "Connected" : "Disconnected"}</span>
-        {room && <span className="room-info">Room: {room}</span>}
-        {peerPublicKey && <span className="encryption-status">🔒 E2E</span>}
+        <span className={connected ? "status connected" : "status disconnected"}>{connected ? "Connected🔒" : "Disconnected🔒"}</span>
       </div>
-      
-      {/* Debug info */}
-      <div style={{ fontSize: '12px', padding: '5px', backgroundColor: '#f0f0f0', borderBottom: '1px solid #ccc' }}>
-        <div>User Data Loaded: {userDataLoaded ? 'Yes' : 'No'}</div>
-        <div>Current User ID: {currentUser}</div>
-        <div>Target User ID: {userID}</div>
-        <div>Room: {room || 'Not assigned'}</div>
-        <div>Encryption: {peerPublicKey ? 'Ready' : 'Initializing...'}</div>
-        <div>Peer Public Key: {peerPublicKey ? 'Available' : 'Not available'}</div>
-      </div>
+      <IonButton style={{ position: 'absolute', top: 8, right: 8, zIndex: 10 }} fill="clear" color="medium" onClick={() => setChatOpen(false)}>
+          <IonIcon icon={close} />
+      </IonButton>
       
       <div className="chat-messages">
         {messages.map((msg, idx) => (
           <div key={idx} className={`chat-message ${msg.from === currentUser ? "me" : "other"}`}>
             <span className="chat-text">
               {msg.message}
-              {msg.encrypted && <span style={{ fontSize: '10px', color: '#666' }}> 🔒</span>}
             </span>
             <span className="chat-timestamp">{msg.timestamp}</span>
           </div>

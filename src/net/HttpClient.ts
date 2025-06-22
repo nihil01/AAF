@@ -4,6 +4,7 @@ import {SharedPreferences} from "../utilities/SharedPreferences";
 import type {AvailableUser, FriendsStruct} from "./FriendsStruct.ts";
 import type {UserCords} from "./AppStateConnection.ts";
 import type { ProfileData, VehicleWithMedia } from '../types/profile';
+import { Preferences } from "@capacitor/preferences";
 
 export class HttpClient {
 
@@ -382,13 +383,20 @@ export class HttpClient {
 
     async logout(): Promise<void> {
         const refreshToken = await SharedPreferences.getToken('refresh');
-        await fetch(`${this.AUTH_BASE_URL}/logout`, {
-            headers: {
-                'Authorization': `Bearer ${refreshToken}`
-            }
-        });
+        try {
+            await fetch(`${this.AUTH_BASE_URL}/logout`, {
+                headers: {
+                    'Authorization': `Bearer ${refreshToken}`
+                }
+            });
+            await Preferences.clear();
+        } catch (error) {
+            console.error('Error in logout:', error);
+            throw error;
+        }
 
-        await SharedPreferences.clearAll();
+        location.href = "/";
+       
     }
 
     async getProfileData(username?: string): Promise<ProfileData> {
@@ -405,7 +413,6 @@ export class HttpClient {
             });
 
             const response = await this.handleResponse(await fetch(request), request);
-
 
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);

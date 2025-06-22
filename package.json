@@ -15,6 +15,7 @@
   "dependencies": {
     "@capacitor-community/background-geolocation": "^1.2.22",
     "@capacitor-community/native-audio": "^7.0.0",
+    "@capacitor-community/sqlite": "^7.0.0",
     "@capacitor-firebase/authentication": "^7.2.0",
     "@capacitor/android": "^7.2.0",
     "@capacitor/app": "^7.0.1",
@@ -24,6 +25,7 @@
     "@capacitor/geolocation": "^7.1.2",
     "@capacitor/google-maps": "^7.0.2",
     "@capacitor/ios": "^7.2.0",
+    "@capacitor/network": "^7.0.1",
     "@capacitor/preferences": "^7.0.1",
     "@capacitor/push-notifications": "^7.0.1",
     "@capacitor/splash-screen": "latest",

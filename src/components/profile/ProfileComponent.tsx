@@ -21,7 +21,7 @@ import { useParams } from 'react-router-dom';
 import { car, logoInstagram, logoFacebook, logoTwitter, logoLinkedin, globe } from 'ionicons/icons';
 import { VehicleCard } from "../vehicles/VehicleCard";
 import { useLanguage } from '../../context/LanguageContext';
-import type { ProfileData, VehicleWithMedia } from "../../types/profile";
+import type { ProfileData } from "../../types/profile";
 import { HttpClient } from '../../net/HttpClient';
 import { CustomLoaderComponent } from '../loader/CustomLoaderComponent';
 import { MockDataInitializer } from "../../utilities/MockDataInitializer";
@@ -58,146 +58,146 @@ const parseSocialNetworks = (socialNetworks: string): SocialNetwork[] => {
 const httpClient = new HttpClient();
 
 // Mock data for testing
-const MOCK_PROFILE_DATA: ProfileData = {
-    username: "Brat",
-    registered: "2024-01-15T10:30:00Z",
-    online: true,
-    avatar: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=800&auto=format&fit=crop",
-    about: "Car enthusiast and automotive photographer. Love to share my journey with amazing vehicles. Currently own a collection of performance cars and enjoy track days and car meets.",
-    social_networks: JSON.stringify([
-        { type: 'instagram', value: 'johndoe_cars' },
-        { type: 'facebook', value: 'johndoe.auto' },
-        { type: 'twitter', value: 'johndoe_racing' },
-        { type: 'linkedin', value: 'john-doe-automotive' }
-    ]),
-    vehicles: [
-        {
-            uuid: "1",
-            id: 1,
-            make: "BMW",
-            model: "M3",
-            year: 2022,
-            engineSpecs: "3.0L Twin-Turbo I6",
-            horsePower: 473,
-            torque: "550 Nm",
-            zeroToHundred: "4.1s",
-            story: "A sporty sedan with a legacy of performance and driving pleasure. This M3 has been my dream car for years, and it's even better than I imagined. The handling is precise, the power delivery is smooth, and the sound is intoxicating.",
-            modifications: JSON.stringify([
-                "Carbon Fiber Spoiler",
-                "Performance Exhaust",
-                "Lowered Suspension",
-                "Stage 2 Tune",
-                "Forged Wheels"
-            ]),
-            created_at: "2024-01-15T10:30:00Z",
-            photo_urls: [
-                "https://images.unsplash.com/photo-1607853202273-797f1c22a38e?w=800&auto=format&fit=crop",
-                "https://images.unsplash.com/photo-1607853202273-797f1c22a38e?w=800&auto=format&fit=crop",
-                "https://images.unsplash.com/photo-1607853202273-797f1c22a38e?w=800&auto=format&fit=crop"
-            ]
-        },
-        {
-            uuid: "2",
-            id: 2,
-            make: "Porsche",
-            model: "911",
-            year: 2021,
-            engineSpecs: "3.0L Twin-Turbo Flat-6",
-            horsePower: 379,
-            torque: "450 Nm",
-            zeroToHundred: "4.2s",
-            story: "My weekend track warrior. This 911 has been modified for both street and track use. The balance and precision of this car is unmatched. Every drive is an event, and it never fails to put a smile on my face.",
-            modifications: JSON.stringify([
-                "Sport Suspension",
-                "Track Tires",
-                "Roll Cage",
-                "Carbon Ceramic Brakes",
-                "Custom ECU Tune"
-            ]),
-            created_at: "2024-01-15T10:30:00Z",
-            photo_urls: [
-                "https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=800&auto=format&fit=crop",
-                "https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=800&auto=format&fit=crop",
-                "https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=800&auto=format&fit=crop"
-            ]
-        },
-        {
-            uuid: "3",
-            id: 3,
-            make: "Mercedes-AMG",
-            model: "GT",
-            year: 2023,
-            engineSpecs: "4.0L Biturbo V8",
-            horsePower: 577,
-            torque: "700 Nm",
-            zeroToHundred: "3.2s",
-            story: "The perfect blend of luxury and performance. This AMG GT is my daily driver and weekend cruiser. The V8 soundtrack is incredible, and the interior quality is second to none.",
-            modifications: JSON.stringify([
-                "Performance Exhaust",
-                "Carbon Fiber Interior Trim",
-                "Custom Wheels",
-                "Lowering Springs",
-                "Stage 1 Tune"
-            ]),
-            created_at: "2024-01-15T10:30:00Z",
-            photo_urls: [
-                "https://images.unsplash.com/photo-1618843479313-40f8afb4b4d8?w=800&auto=format&fit=crop",
-                "https://images.unsplash.com/photo-1618843479313-40f8afb4b4d8?w=800&auto=format&fit=crop",
-                "https://images.unsplash.com/photo-1618843479313-40f8afb4b4d8?w=800&auto=format&fit=crop"
-            ]
-        },
-        {
-            uuid: "4",
-            id: 4,
-            make: "Audi",
-            model: "RS6",
-            year: 2022,
-            engineSpecs: "4.0L Twin-Turbo V8",
-            horsePower: 621,
-            torque: "850 Nm",
-            zeroToHundred: "3.6s",
-            story: "The ultimate family wagon with supercar performance. This RS6 is perfect for daily use while still being able to embarrass most sports cars. The combination of practicality and performance is unmatched.",
-            modifications: JSON.stringify([
-                "Performance Air Intake",
-                "Sport Exhaust System",
-                "Carbon Fiber Body Kit",
-                "Custom Wheels",
-                "ECU Remap"
-            ]),
-            created_at: "2024-01-15T10:30:00Z",
-            photo_urls: [
-                "https://images.unsplash.com/photo-1603584173870-7f23fdae1b7a?w=800&auto=format&fit=crop",
-                "https://images.unsplash.com/photo-1603584173870-7f23fdae1b7a?w=800&auto=format&fit=crop",
-                "https://images.unsplash.com/photo-1603584173870-7f23fdae1b7a?w=800&auto=format&fit=crop"
-            ]
-        }
-    ]
-};
+// const MOCK_PROFILE_DATA: ProfileData = {
+//     username: "Brat",
+//     registered: "2024-01-15T10:30:00Z",
+//     online: true,
+//     avatar: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=800&auto=format&fit=crop",
+//     about: "Car enthusiast and automotive photographer. Love to share my journey with amazing vehicles. Currently own a collection of performance cars and enjoy track days and car meets.",
+//     social_networks: JSON.stringify([
+//         { type: 'instagram', value: 'johndoe_cars' },
+//         { type: 'facebook', value: 'johndoe.auto' },
+//         { type: 'twitter', value: 'johndoe_racing' },
+//         { type: 'linkedin', value: 'john-doe-automotive' }
+//     ]),
+//     vehicles: [
+//         {
+//             uuid: "1",
+//             id: 1,
+//             make: "BMW",
+//             model: "M3",
+//             year: 2022,
+//             engineSpecs: "3.0L Twin-Turbo I6",
+//             horsePower: 473,
+//             torque: "550 Nm",
+//             zeroToHundred: "4.1s",
+//             story: "A sporty sedan with a legacy of performance and driving pleasure. This M3 has been my dream car for years, and it's even better than I imagined. The handling is precise, the power delivery is smooth, and the sound is intoxicating.",
+//             modifications: JSON.stringify([
+//                 "Carbon Fiber Spoiler",
+//                 "Performance Exhaust",
+//                 "Lowered Suspension",
+//                 "Stage 2 Tune",
+//                 "Forged Wheels"
+//             ]),
+//             created_at: "2024-01-15T10:30:00Z",
+//             photo_urls: [
+//                 "https://images.unsplash.com/photo-1607853202273-797f1c22a38e?w=800&auto=format&fit=crop",
+//                 "https://images.unsplash.com/photo-1607853202273-797f1c22a38e?w=800&auto=format&fit=crop",
+//                 "https://images.unsplash.com/photo-1607853202273-797f1c22a38e?w=800&auto=format&fit=crop"
+//             ]
+//         },
+//         {
+//             uuid: "2",
+//             id: 2,
+//             make: "Porsche",
+//             model: "911",
+//             year: 2021,
+//             engineSpecs: "3.0L Twin-Turbo Flat-6",
+//             horsePower: 379,
+//             torque: "450 Nm",
+//             zeroToHundred: "4.2s",
+//             story: "My weekend track warrior. This 911 has been modified for both street and track use. The balance and precision of this car is unmatched. Every drive is an event, and it never fails to put a smile on my face.",
+//             modifications: JSON.stringify([
+//                 "Sport Suspension",
+//                 "Track Tires",
+//                 "Roll Cage",
+//                 "Carbon Ceramic Brakes",
+//                 "Custom ECU Tune"
+//             ]),
+//             created_at: "2024-01-15T10:30:00Z",
+//             photo_urls: [
+//                 "https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=800&auto=format&fit=crop",
+//                 "https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=800&auto=format&fit=crop",
+//                 "https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=800&auto=format&fit=crop"
+//             ]
+//         },
+//         {
+//             uuid: "3",
+//             id: 3,
+//             make: "Mercedes-AMG",
+//             model: "GT",
+//             year: 2023,
+//             engineSpecs: "4.0L Biturbo V8",
+//             horsePower: 577,
+//             torque: "700 Nm",
+//             zeroToHundred: "3.2s",
+//             story: "The perfect blend of luxury and performance. This AMG GT is my daily driver and weekend cruiser. The V8 soundtrack is incredible, and the interior quality is second to none.",
+//             modifications: JSON.stringify([
+//                 "Performance Exhaust",
+//                 "Carbon Fiber Interior Trim",
+//                 "Custom Wheels",
+//                 "Lowering Springs",
+//                 "Stage 1 Tune"
+//             ]),
+//             created_at: "2024-01-15T10:30:00Z",
+//             photo_urls: [
+//                 "https://images.unsplash.com/photo-1618843479313-40f8afb4b4d8?w=800&auto=format&fit=crop",
+//                 "https://images.unsplash.com/photo-1618843479313-40f8afb4b4d8?w=800&auto=format&fit=crop",
+//                 "https://images.unsplash.com/photo-1618843479313-40f8afb4b4d8?w=800&auto=format&fit=crop"
+//             ]
+//         },
+//         {
+//             uuid: "4",
+//             id: 4,
+//             make: "Audi",
+//             model: "RS6",
+//             year: 2022,
+//             engineSpecs: "4.0L Twin-Turbo V8",
+//             horsePower: 621,
+//             torque: "850 Nm",
+//             zeroToHundred: "3.6s",
+//             story: "The ultimate family wagon with supercar performance. This RS6 is perfect for daily use while still being able to embarrass most sports cars. The combination of practicality and performance is unmatched.",
+//             modifications: JSON.stringify([
+//                 "Performance Air Intake",
+//                 "Sport Exhaust System",
+//                 "Carbon Fiber Body Kit",
+//                 "Custom Wheels",
+//                 "ECU Remap"
+//             ]),
+//             created_at: "2024-01-15T10:30:00Z",
+//             photo_urls: [
+//                 "https://images.unsplash.com/photo-1603584173870-7f23fdae1b7a?w=800&auto=format&fit=crop",
+//                 "https://images.unsplash.com/photo-1603584173870-7f23fdae1b7a?w=800&auto=format&fit=crop",
+//                 "https://images.unsplash.com/photo-1603584173870-7f23fdae1b7a?w=800&auto=format&fit=crop"
+//             ]
+//         }
+//     ]
+// };
 
 // API Service
 const fetchUserProfile = async (username?: string): Promise<ProfileData> => {
     try {
         // Comment out real backend call
-        // return await httpClient.getProfileData(username || '');
+        return await httpClient.getProfileData(username || '');
         
-        // Use mock data instead
-        console.log("Using mock profile data");
-        // Simulate network delay
-        await new Promise(resolve => setTimeout(resolve, 500));
-        return MOCK_PROFILE_DATA;
+        // // Use mock data instead
+        // console.log("Using mock profile data");
+        // // Simulate network delay
+        // await new Promise(resolve => setTimeout(resolve, 500));
+        // return MOCK_PROFILE_DATA;
     } catch (error) {
         console.error('Error fetching profile:', error);
         throw new Error('Failed to fetch profile data');
     }
 };
 
-// Mock function to simulate online status changes
-let mockOnlineStatus = true;
-export const toggleMockOnlineStatus = () => {
-    mockOnlineStatus = !mockOnlineStatus;
-    MOCK_PROFILE_DATA.online = mockOnlineStatus;
-    return mockOnlineStatus;
-};
+// // Mock function to simulate online status changes
+// let mockOnlineStatus = true;
+// export const toggleMockOnlineStatus = () => {
+//     mockOnlineStatus = !mockOnlineStatus;
+//     MOCK_PROFILE_DATA.online = mockOnlineStatus;
+//     return mockOnlineStatus;
+// };
 
 // Sub-components
 const ProfileHeader: React.FC<{ profile: ProfileData, translations: any }> = ({ profile, translations }) => {
@@ -228,7 +228,7 @@ const ProfileHeader: React.FC<{ profile: ProfileData, translations: any }> = ({ 
                     </h2>
                     <p className="ion-text-muted">{translations.profile?.memberSince || 'Member since'} {new Date(profile.registered).toLocaleDateString()}</p>
                     <div className="ion-flex ion-align-items-center ion-margin-top">
-                        {socialNetworks.length > 0 && (
+                        {socialNetworks.length > 0 ? (
                             <div className="ion-flex ion-align-items-center">
                                 {socialNetworks.map((social, index) => (
                                     <IonButton
@@ -256,7 +256,7 @@ const ProfileHeader: React.FC<{ profile: ProfileData, translations: any }> = ({ 
                                     </IonButton>
                                 ))}
                             </div>
-                        )}
+                        ): <p>No social networks</p>}
                     </div>
                 </div>
             </div>
@@ -276,11 +276,11 @@ export const ProfilePage: React.FC = () => {
     const loadProfile = async () => {
         try {
 
-            const mockUser = await MockDataInitializer.initializeMockUser();
-            if (!mockUser) {
-                console.log("Mock user initialization cancelled or failed");
-                return;
-            }
+            // const mockUser = await MockDataInitializer.initializeMockUser();
+            // if (!mockUser) {
+            //     console.log("Mock user initialization cancelled or failed");
+            //     return;
+            // }
 
 
             setIsLoading(true);

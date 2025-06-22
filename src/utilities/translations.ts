@@ -18,6 +18,15 @@ export interface Translations {
     requests: string;
     nearby: string;
   };
+  network: {
+    noConnection: string;
+    checkConnection: string;
+    checking: string;
+    retry: string;
+    status: string;
+    online: string;
+    offline: string;
+  };
   map: {
     trackingOn: string;
     trackingOff: string;
@@ -130,6 +139,15 @@ const translations: Record<Language, Translations> = {
       requests: 'Requests',
       nearby: 'Nearby'
     },
+    network: {
+      noConnection: 'No Connection',
+      checkConnection: 'Check Connection',
+      checking: 'Checking...',
+      retry: 'Retry',
+      status: 'Status',
+      online: 'Online',
+      offline: 'Offline'
+    },
     map: {
       trackingOn: 'Tracking On',
       trackingOff: 'Tracking Off',
@@ -240,6 +258,15 @@ const translations: Record<Language, Translations> = {
       requests: 'Sorğular',
       nearby: 'Yaxınlıqda'
     },
+    network: {
+      noConnection: 'Bağlantı Yok',
+      checkConnection: 'Bağlantıyı Yoxlamaq',
+      checking: 'Yoxlanılır...',
+      retry: 'Yenidən Cəhd Et',
+      status: 'Status',
+      online: 'Online',
+      offline: 'Çevrilmiş'
+    },
     map: {
       trackingOn: 'İzlənmə Aktivdir',
       trackingOff: 'İzlənmə Deaktivdir',
@@ -349,6 +376,15 @@ const translations: Record<Language, Translations> = {
       myFriends: 'Друзья',
       requests: 'Запросы',
       nearby: 'Рядом'
+    },
+    network: {
+      noConnection: 'Нет Подключения',
+      checkConnection: 'Проверить Подключение',
+      checking: 'Проверка...',
+      retry: 'Повторить',
+      status: 'Статус',
+      online: 'Онлайн',
+      offline: 'Офлайн'
     },
     map: {
       trackingOn: 'Отслеживание Включено',
