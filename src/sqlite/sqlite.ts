@@ -113,27 +113,19 @@ class SQLiteService {
     }
 
 
-    public async updateUserChat(chatId: string, data: any): Promise<void> {
+    public async insertIntoUserChat(chatId: string, data: any): Promise<void> {
         try {
             // First try to update existing record
-            const updateSql = `UPDATE user_chat SET data = ? WHERE chat_id = ?`;
-            const updateResult = await this.query(updateSql, [JSON.stringify(data), chatId]);
-            
-            // If no rows were affected, insert new record
-            if (updateResult.changes?.changes === 0) {
-                const insertSql = `INSERT INTO user_chat (chat_id, data) VALUES (?, ?)`;
-                await this.query(insertSql, [chatId, JSON.stringify(data)]);
-                console.log("✅ New chat data inserted");
-            } else {
-                console.log("✅ Chat data updated");
-            }
+            const insertSql = `INSERT INTO user_chat (chat_id, data) VALUES(?, ?)`;
+            await this.query(insertSql, [ chatId, JSON.stringify(data) ]);
+
         } catch (error) {
             console.error("❌ Error updating user chat:", error);
             throw error;
         }
     }
 
-    public async getUserChat(chatId: string): Promise<any> {
+    public async getUserChatData(chatId: string): Promise<any> {
         try {
             const sql = `SELECT * FROM user_chat WHERE chat_id = ?`;
             const result = await this.query(sql, [chatId]);

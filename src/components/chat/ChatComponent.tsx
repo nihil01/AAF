@@ -1,18 +1,17 @@
-import React, { useEffect, useRef, useState } from "react";
-import { connectSocket, disconnectSocket, sendMessage, registerForRoom } from "../../net/SocketIO";
-import type { MessageDTO } from "../../net/SocketIO";
+import React, {useEffect, useRef, useState} from "react";
+import type {MessageDTO} from "../../net/SocketIO";
+import {connectSocket, disconnectSocket, registerForRoom, sendMessage} from "../../net/SocketIO";
 import "./ChatComponent.css";
-import { SharedPreferences } from "../../utilities/SharedPreferences";
-import {  
-  getPeerPublicKey, 
-  getCryptoKeyAsString,
-  sendEncryptedMessage,
-  receiveEncryptedMessage
+import {SharedPreferences} from "../../utilities/SharedPreferences";
+import {
+  getPeerPublicKey,
+  receiveEncryptedMessage,
+  sendEncryptedMessage
 } from "../../utilities/Crypto";
-import { IonIcon } from "@ionic/react";
-import { IonButton } from "@ionic/react";
-import { close } from "ionicons/icons";
-import { sqliteService } from "../../sqlite/sqlite";
+import {IonButton, IonIcon, useIonAlert} from "@ionic/react";
+import {close} from "ionicons/icons";
+import {sqliteService} from "../../sqlite/sqlite";
+import {CustomLoaderComponent} from "../loader/CustomLoaderComponent.tsx";
 
 export interface Message {
   from: number;
@@ -31,14 +30,21 @@ const ChatComponent: React.FC<{ userID: number | null; userName: string | null,
   const [connected, setConnected] = useState(false);
   const [room, setRoom] = useState("");
   const [currentUser, setCurrentUser] = useState(0);
-  const [userDataLoaded, setUserDataLoaded] = useState(false);
   const [peerPublicKey, setPeerPublicKey] = useState<CryptoKey | null>(null);
-  const [peerPublicKeyString, setPeerPublicKeyString] = useState<string | null>(null);
- 
+  const [messageSentTimestamp, setMessageSentTimestamp] = useState<number>(0);
+
+  //await untial data from sqlite is initialized
+  const [sqliteInitializedFlag, setSqliteInitializedFlag] = useState<boolean>(false);
+  const [presentAlert] = useIonAlert()
   
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
-  
+  const isMessageSendingAllowed = (): boolean => {
+
+    return (messageSentTimestamp + 5000 <= new Date().getTime());
+
+  }
+
   const fetchPeerPublicKey = async () => {
     console.log("🔍 Fetching peer public key for userID:", userID);
     if (userID) {
@@ -47,12 +53,6 @@ const ChatComponent: React.FC<{ userID: number | null; userName: string | null,
         if (publicKey) {
           setPeerPublicKey(publicKey);
           console.log("✅ Peer public key fetched and set");
-          
-          // Convert CryptoKey to string
-          const publicKeyString = await getCryptoKeyAsString(publicKey);
-          setPeerPublicKeyString(publicKeyString);
-          
-          console.log("Peer public key as string:", publicKeyString);
         } else {
           console.log("⚠️ No peer public key found for user:", userID);
           //close chat
@@ -91,7 +91,6 @@ const ChatComponent: React.FC<{ userID: number | null; userName: string | null,
         console.log("User data from preferences: " + userData.username + " " + userData.id);
         const userId = userData.id ?? 0;
         setCurrentUser(userId);
-        setUserDataLoaded(true);
         console.log("Current user set to:", userId);
 
         // Only proceed if we have a valid user ID
@@ -111,7 +110,6 @@ const ChatComponent: React.FC<{ userID: number | null; userName: string | null,
           registerForRoom(roomRegistrationDto);
           
           // Listen for room assignment response
-          // @ts-ignore
           window.socket?.on("room_assigned", (response: any) => {
             console.log("Room assigned:", response);
             if (response.room) {
@@ -121,7 +119,6 @@ const ChatComponent: React.FC<{ userID: number | null; userName: string | null,
           });
           
           // Listen for private messages
-          // @ts-ignore
           window.socket?.on("private_message_received", async (dto: MessageDTO) => {
             console.log("Received message:", dto);
             if (dto.room) {
@@ -158,7 +155,7 @@ const ChatComponent: React.FC<{ userID: number | null; userName: string | null,
             }
           });
           //read user chat
-          readUserChat();
+          await readUserChat();
         } else {
           console.error("Invalid user ID:", userId);
           alert("Error: Invalid user ID. Please check mock data initialization.");
@@ -169,18 +166,15 @@ const ChatComponent: React.FC<{ userID: number | null; userName: string | null,
       }
     };
 
-    fetchPeerPublicKey();
-    initializeChat();
+    fetchPeerPublicKey().then(() => initializeChat());
 
 
     // Listen for connect/disconnect
-    // @ts-ignore
     window.socket?.on("connect", () => {
       console.log("Socket connected");
       setConnected(true);
     });
     
-    // @ts-ignore
     window.socket?.on("disconnect", () => {
       console.log("Socket disconnected");
       setConnected(false);
@@ -190,13 +184,9 @@ const ChatComponent: React.FC<{ userID: number | null; userName: string | null,
       console.log("Cleaning up chat component...");
       disconnectSocket();
       setConnected(false);
-      // @ts-ignore
       window.socket?.off("connect");
-      // @ts-ignore
       window.socket?.off("disconnect");
-      // @ts-ignore
       window.socket?.off("room_assigned");
-      // @ts-ignore
       window.socket?.off("private_message");
     };
   }, [userID, userName]);
@@ -208,9 +198,10 @@ const ChatComponent: React.FC<{ userID: number | null; userName: string | null,
   const readUserChat = async () => {
     if(room != null && room != ""){
       try {
-        const data = await sqliteService.getUserChat(room);
+        const data = await sqliteService.getUserChatData(room);
         console.log("User chat data:", JSON.parse(data));
 
+        setSqliteInitializedFlag(false);
         for(let i = 0; i < JSON.parse(data).length; i++){
           //update in chatbox
           setMessages(prev => [...prev, {
@@ -221,6 +212,7 @@ const ChatComponent: React.FC<{ userID: number | null; userName: string | null,
             room: room,
           }]);
         }
+        setSqliteInitializedFlag(true);
       } catch (error) {
         console.error("Error reading user chat:", error);
       }
@@ -234,10 +226,15 @@ const ChatComponent: React.FC<{ userID: number | null; userName: string | null,
     }
     
     try {
-      let encryptedMessage = input;
-      
       // Encrypt the message if encryption is ready and we have remote key bundle
       if (peerPublicKey && userID) {
+
+        if (!isMessageSendingAllowed()) return await presentAlert({
+          header: 'Warning',
+          message: "Wow brother ! Wait 5 sec before sending again!",
+          buttons: ['OK']
+        })
+
         try {
           console.log("🔐 Starting encryption process...");
           console.log("Peer public key exists:", !!peerPublicKey);
@@ -246,13 +243,16 @@ const ChatComponent: React.FC<{ userID: number | null; userName: string | null,
           const dto: Message = { 
             from: currentUser, 
             to: userID, 
-            message: encryptedMessage, 
+            message: input,
             type: "PRIVATE_MESSAGE", 
             room: room 
           };
 
           console.log("📤 Calling sendEncryptedMessage with DTO:", dto);
           const encryptedData: MessageDTO = await sendEncryptedMessage(dto, peerPublicKey);
+
+          await sqliteService.insertIntoUserChat(room, input);
+
           console.log("✅ sendEncryptedMessage completed:", encryptedData);
           
           console.log("Message encrypted successfully");
@@ -277,6 +277,9 @@ const ChatComponent: React.FC<{ userID: number | null; userName: string | null,
 
         } catch (error) {
           console.error("❌ Encryption failed, sending plain text:", error);
+        }finally {
+          setMessageSentTimestamp(new Date().getTime());
+          console.log("Message sent! Timestamp defined");
         }
       } else {
         console.log("⚠️ Encryption skipped - conditions not met:");
@@ -296,7 +299,12 @@ const ChatComponent: React.FC<{ userID: number | null; userName: string | null,
   };
 
   return (
+
     <div className="chat-container">
+
+
+      { !sqliteInitializedFlag && <CustomLoaderComponent/> }
+
       <div className="chat-header d-flex flex-column">
         <span>Chat with {userName}</span>
         <span className={connected ? "status connected" : "status disconnected"}>{connected ? "Connected🔒" : "Disconnected🔒"}</span>
